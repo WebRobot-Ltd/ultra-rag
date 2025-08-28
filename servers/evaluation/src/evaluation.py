@@ -154,7 +154,7 @@ def rougel_score(gt: List[str], pred: str) -> float:
         scores.append(score)
     return max(scores) if scores else 0.0
 
-
+# Compute metrics
 def compute_metrics(
     gt_list: List[List[str]],
     pred_list: List[str],
@@ -191,7 +191,7 @@ def compute_metrics(
         avg_results[f"avg_{metric}"] = sum(scores) / len(scores)
     return {**results, **avg_results}
 
-
+# Save evaluation results
 def save_evaluation_results(
     results: Dict[str, float],
     save_path: str,
@@ -224,7 +224,7 @@ def save_evaluation_results(
     app.logger.info(f"\n{table_md}")
     return {"eval_res": results}
 
-
+# Evaluate
 @app.tool(output="pred_ls,gt_ls,metrics,save_path->eval_res")
 def evaluate(
     pred_ls: List[str],
