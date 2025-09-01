@@ -14,12 +14,12 @@ RAG（Retrieval-Augmented Generation，检索增强生成）是一种让大语�
 
 **检索阶段**：根据用户问题，从文档库中找到最相关的内容（比如知识库、网页等）；  
 <p align="left">
-  <img src="../image/00/retrieve_stage.PNG" alt="检索阶段" width="300"/>
+  <img src="../image/00/retrieve_stage.png" alt="检索阶段" width="300"/>
 </p>
 
 **生成阶段**：把检索到的内容作为上下文，输入给 LLM，让它基于这些信息生成回答  
 <p align="left">
-  <img src="../image/00/gen_stage.PNG" alt="生成阶段" width="300"/>
+  <img src="../image/00/gen_stage.png" alt="生成阶段" width="300"/>
 </p>
 
 ### 作用
@@ -33,7 +33,7 @@ RAG（Retrieval-Augmented Generation，检索增强生成）是一种让大语�
 UltraRAG 2.0 是由清华大学 THUNLP 实验室、东北大学 NEUIR 实验室、OpenBMB 和 AI9stars 联合推出的开源 RAG 框架。它最大的特色，是首个基于 Model Context Protocol，也就是 MCP 架构设计的 RAG 系统。
 借助 MCP 的模块化设计，研究者只需要编写一份 YAML 文件，就能直接描述检索和生成的完整流程。无论是简单的串行推理，还是更复杂的循环、条件分支逻辑，都可以轻松实现。
 <p align="left">
-  <img src="../image/00/architecture.PNG" alt="架构" />
+  <img src="../image/00/architecture.png" alt="架构" />
 </p>
 这种方式大幅降低了工程实现的复杂度。科研人员无需再为繁琐的控制逻辑耗费时间，可以将更多精力投入到实验设计和算法创新中。用一句话总结就是：**少写代码，多写想法**。
 
@@ -94,7 +94,7 @@ ultrarag run examples/sayhello.yaml
 - **索引（Indexing）**：把这些向量组织起来，比如用 FAISS，这样检索时才能在几百万条文档中瞬间找到最相关的若干条。
 
 <p align="left">
-  <img src="../image/00/emb_index.PNG" alt="编码与索引" />
+  <img src="../image/00/emb_index.png" alt="编码与索引" />
 </p>
 
 ### 示例语料（Wiki 文本）
@@ -162,13 +162,13 @@ ultrarag run examples/embedding_and_index.yaml
 ### 检索流程
 
 <p align="left">
-  <img src="../image/00/retrieve.PNG" alt="检索" />
+  <img src="../image/00/retrieve.png" alt="检索" />
 </p>
 
 ### 生成流程
 
 <p align="left">
-  <img src="../image/00/gen_stage.PNG" alt="检索" />
+  <img src="../image/00/gen_stage.png" alt="检索" />
 </p>
 
 ### 数据格式（以 NQ 数据集为例）

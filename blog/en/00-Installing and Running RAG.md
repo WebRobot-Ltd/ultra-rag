@@ -13,12 +13,12 @@ RAG (Retrieval-Augmented Generation) is a technique that allows large language m
 
 **Retrieval stage**: Based on the user's question, find the most relevant content from the document library (such as knowledge bases, web pages, etc.);  
 <p align="left">
-  <img src="../image/00/retrieve_stage.PNG" alt="Retrieval Stage" width="300"/>
+  <img src="../image/00/retrieve_stage.png" alt="Retrieval Stage" width="300"/>
 </p>
 
 **Generation stage**: Use the retrieved content as context input to the LLM, letting it generate answers based on this information  
 <p align="left">
-  <img src="../image/00/gen_stage.PNG" alt="Generation Stage" width="300"/>
+  <img src="../image/00/gen_stage.png" alt="Generation Stage" width="300"/>
 </p>
 
 ### Benefits
@@ -32,7 +32,7 @@ RAG (Retrieval-Augmented Generation) is a technique that allows large language m
 UltraRAG 2.0 is an open-source RAG framework jointly launched by THUNLP Lab at Tsinghua University, NEUIR Lab at Northeastern University, OpenBMB, and AI9stars. Its biggest feature is that it is the first RAG system designed based on the Model Context Protocol (MCP) architecture.  
 With MCP's modular design, researchers only need to write a single YAML file to directly describe the complete retrieval and generation process. Whether it is simple serial reasoning or more complex loops and conditional branching logic, it can be easily implemented.  
 <p align="left">
-  <img src="../image/00/architecture.PNG" alt="Architecture" />
+  <img src="../image/00/architecture.png" alt="Architecture" />
 </p>
 This approach greatly reduces the complexity of engineering implementation. Researchers no longer need to spend time on complicated control logic and can devote more energy to experiment design and algorithm innovation. In one sentence: **Write less code, write more ideas**.
 
@@ -93,7 +93,7 @@ Before using RAG, you need to convert the original documents into vector represe
 - **Indexing**: Organize these vectors, for example using FAISS, so that retrieval can instantly find the most relevant entries among millions of documents.
 
 <p align="left">
-  <img src="../image/00/emb_index.PNG" alt="Encoding and Indexing" />
+  <img src="../image/00/emb_index.png" alt="Encoding and Indexing" />
 </p>
 
 ### Sample Corpus (Wiki Text)
@@ -161,13 +161,13 @@ Once the corpus index is ready, the next step is to combine the retriever and th
 ### Retrieval Process
 
 <p align="left">
-  <img src="../image/00/retrieve.PNG" alt="Retrieval" />
+  <img src="../image/00/retrieve.png" alt="Retrieval" />
 </p>
 
 ### Generation Process
 
 <p align="left">
-  <img src="../image/00/gen_stage.PNG" alt="Generation" />
+  <img src="../image/00/gen_stage.png" alt="Generation" />
 </p>
 
 ### Data Format (Example from NQ Dataset)
