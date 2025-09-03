@@ -22,6 +22,9 @@ retriever_app = Flask(__name__)
 
 class Retriever:
     def __init__(self, mcp_inst: UltraRAG_MCP_Server):
+        self.faiss_use_gpu = False
+        self.faiss_index = None
+
         mcp_inst.tool(
             self.retriever_init,
             output="retriever_path,corpus_path,index_path,faiss_use_gpu,infinity_kwargs,cuda_devices->None",
@@ -112,7 +115,6 @@ class Retriever:
         with jsonlines.open(corpus_path, mode="r") as reader:
             self.contents = [item["contents"] for item in reader]
 
-        self.faiss_index = None
         if index_path is not None and os.path.exists(index_path):
             cpu_index = faiss.read_index(index_path)
 
