@@ -122,11 +122,11 @@ spec:
     tty: true
     resources:
       requests:
-        memory: "2Gi"
-        cpu: "1"
+        memory: "1Gi"
+        cpu: "500m"
       limits:
-        memory: "6Gi"
-        cpu: "2"
+        memory: "3Gi"
+        cpu: "1"
     volumeMounts:
       - name: jenkins-docker-cfg
         mountPath: /kaniko/.docker
