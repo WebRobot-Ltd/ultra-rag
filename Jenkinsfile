@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+    agent none
 
     environment {
         GITHUB_REPOSITORY = 'webrobot-ltd/ultra-rag'
@@ -59,8 +59,26 @@ pipeline {
         }
 
         stage('Checkout') {
+            agent {
+                kubernetes {
+                    yaml """
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: git
+    image: alpine/git:latest
+    command:
+    - sleep
+    args:
+    - 99d
+"""
+                }
+            }
             steps {
-                checkout scm
+                container('git') {
+                    checkout scm
+                }
             }
         }
 
@@ -140,17 +158,33 @@ spec:
             when {
                 expression { return params.DEPLOY_K8S }
             }
-            agent any
+            agent {
+                kubernetes {
+                    yaml """
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: kubectl
+    image: bitnami/kubectl:latest
+    command:
+    - sleep
+    args:
+    - 99d
+"""
+                }
+            }
             steps {
-                script {
-                    echo "☸️ Deploy UltraRAG su Kubernetes..."
-                    
-                    sh '''
-                        # Crea namespace se non esiste
-                        kubectl create namespace ${K8S_NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -
+                container('kubectl') {
+                    script {
+                        echo "☸️ Deploy UltraRAG su Kubernetes..."
                         
-                        # Deploy ConfigMap
-                        cat <<EOF | kubectl apply -f -
+                        sh '''
+                            # Crea namespace se non esiste
+                            kubectl create namespace ${K8S_NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -
+                            
+                            # Deploy ConfigMap
+                            cat <<EOF | kubectl apply -f -
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -160,9 +194,9 @@ data:
   MILVUS_HOST: "${MILVUS_HOST}"
   MILVUS_PORT: "${MILVUS_PORT}"
 EOF
-                        
-                        # Deploy Secret (placeholder)
-                        cat <<EOF | kubectl apply -f -
+                            
+                            # Deploy Secret (placeholder)
+                            cat <<EOF | kubectl apply -f -
 apiVersion: v1
 kind: Secret
 metadata:
@@ -172,9 +206,9 @@ type: Opaque
 data:
   ANTHROPIC_API_KEY: cGxhY2Vob2xkZXI=
 EOF
-                        
-                        # Deploy Service
-                        cat <<EOF | kubectl apply -f -
+                            
+                            # Deploy Service
+                            cat <<EOF | kubectl apply -f -
 apiVersion: v1
 kind: Service
 metadata:
@@ -188,9 +222,9 @@ spec:
     targetPort: 8000
   type: ClusterIP
 EOF
-                        
-                        # Deploy Deployment
-                        cat <<EOF | kubectl apply -f -
+                            
+                            # Deploy Deployment
+                            cat <<EOF | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -247,9 +281,10 @@ spec:
           initialDelaySeconds: 60
           periodSeconds: 30
 EOF
-                        
-                        echo "✅ Deploy Kubernetes completato"
-                    '''
+                            
+                            echo "✅ Deploy Kubernetes completato"
+                        '''
+                    }
                 }
             }
         }
