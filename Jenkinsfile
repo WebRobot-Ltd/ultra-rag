@@ -59,14 +59,38 @@ pipeline {
         }
 
         stage('Checkout') {
-            agent any
+            agent {
+                kubernetes {
+                    yaml """
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: git
+    image: alpine/git:latest
+    command:
+    - sleep
+    args:
+    - 99d
+    resources:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "256Mi"
+        cpu: "200m"
+"""
+                }
+            }
             steps {
-                checkout scm
-                script {
-                    echo "🔄 Checkout completato per build ${params.BUILD_TYPE}"
-                    echo "📦 Repository: ${env.GITHUB_REPOSITORY}"
-                    echo "🐳 Immagine: ${env.DOCKER_IMAGE}:${env.DOCKER_TAG}"
-                    echo "🏗️ Build Type: ${params.BUILD_TYPE}"
+                container('git') {
+                    checkout scm
+                    script {
+                        echo "🔄 Checkout completato per build ${params.BUILD_TYPE}"
+                        echo "📦 Repository: ${env.GITHUB_REPOSITORY}"
+                        echo "🐳 Immagine: ${env.DOCKER_IMAGE}:${env.DOCKER_TAG}"
+                        echo "🏗️ Build Type: ${params.BUILD_TYPE}"
+                    }
                 }
             }
         }
