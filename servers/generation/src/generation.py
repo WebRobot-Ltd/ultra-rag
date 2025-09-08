@@ -118,7 +118,7 @@ async def generate(
         else:
             raise ValueError(f"Unsupported message format: {m}")
 
-    sem = asyncio.Semaphore(16)
+    sem = asyncio.Semaphore(8)
 
     async def call_with_retry(idx: int, prompt: str, retries=3, delay=1):
         msg = [{"role": "user", "content": prompt}]
@@ -184,7 +184,7 @@ async def multimodal_generate(
         else:
             raise ValueError(f"Unsupported message format: {m}")
 
-    sem = asyncio.Semaphore(16)
+    sem = asyncio.Semaphore(8)
 
     def to_data_url(path_or_url: str) -> str:
         s = str(path_or_url).strip()
