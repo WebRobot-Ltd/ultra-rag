@@ -66,24 +66,20 @@ apiVersion: v1
 kind: Pod
 spec:
   containers:
-  - name: git
-    image: alpine/git:latest
-    command:
-    - sleep
-    args:
-    - 99d
+  - name: jnlp
+    image: jenkins/inbound-agent:latest
     resources:
       requests:
-        memory: "128Mi"
+        memory: "256Mi"
         cpu: "100m"
       limits:
-        memory: "256Mi"
+        memory: "512Mi"
         cpu: "200m"
 """
                 }
             }
             steps {
-                container('git') {
+                container('jnlp') {
                     checkout([
                         $class: 'GitSCM',
                         branches: [[name: '*/main']],
