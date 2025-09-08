@@ -111,7 +111,7 @@ spec:
 
         stage('Build & Push Docker Image') {
             when {
-                not { params.REDEPLOY_ONLY }
+                expression { return !params.REDEPLOY_ONLY }
             }
             agent {
                 kubernetes {
@@ -156,7 +156,7 @@ spec:
 
         stage('Deploy to Kubernetes') {
             when {
-                params.DEPLOY_K8S
+                expression { return params.DEPLOY_K8S }
             }
             agent {
                 kubernetes {
