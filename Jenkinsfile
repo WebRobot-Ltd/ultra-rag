@@ -2,7 +2,7 @@ pipeline {
     agent none
 
     environment {
-        GITHUB_REPOSITORY = 'WebRobot-Ltd/ultra-rag'
+        GITHUB_REPOSITORY = 'webrobot-ltd/ultra-rag'
         DOCKER_IMAGE = "ghcr.io/webrobot-ltd/ultra-rag"
         DOCKER_TAG = "${env.BUILD_NUMBER}"
         DOCKER_REGISTRY = 'ghcr.io'
