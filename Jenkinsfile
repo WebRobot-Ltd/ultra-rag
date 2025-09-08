@@ -1,5 +1,5 @@
 pipeline {
-    agent none
+    agent any
 
     environment {
         GITHUB_REPOSITORY = 'webrobot-ltd/ultra-rag'
@@ -59,7 +59,6 @@ pipeline {
         }
 
         stage('Checkout') {
-            agent any
             steps {
                 checkout scm
             }
