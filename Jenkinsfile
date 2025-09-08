@@ -132,6 +132,13 @@ spec:
     command:
     - /busybox/cat
     tty: true
+    resources:
+      requests:
+        memory: "4Gi"
+        cpu: "2"
+      limits:
+        memory: "8Gi"
+        cpu: "4"
     volumeMounts:
       - name: jenkins-docker-cfg
         mountPath: /kaniko/.docker
