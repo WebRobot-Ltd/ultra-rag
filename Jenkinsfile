@@ -59,6 +59,9 @@ pipeline {
         }
 
         stage('Checkout') {
+            agent {
+                label 'master'
+            }
             steps {
                 checkout scm
             }
