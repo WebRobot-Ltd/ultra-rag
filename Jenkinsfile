@@ -59,21 +59,6 @@ pipeline {
         }
 
         stage('Checkout') {
-            agent {
-                kubernetes {
-                    yaml """
-apiVersion: v1
-kind: Pod
-spec:
-  containers:
-  - name: git
-    image: alpine/git:latest
-    command:
-    - cat
-    tty: true
-"""
-                }
-            }
             steps {
                 checkout scm
             }
