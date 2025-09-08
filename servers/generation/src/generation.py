@@ -204,15 +204,22 @@ def initialize_local_vllm(
     return {"base_url": base_url}
 
 
-@app.tool(output="prompt_ls,model_name,base_url,sampling_params->ans_ls")
+@app.tool(output="prompt_ls,model_name,base_url,sampling_params,api_key->ans_ls")
 async def generate(
     prompt_ls: List[Union[str, Dict[str, Any]]],
     model_name: str,
     base_url: str,
     sampling_params: Dict[str, Any],
+    api_key: str = "EMPTY",
 ) -> Dict[str, List[str]]:
-    api_key = os.environ.get("LLM_API_KEY", "")
-    client = AsyncOpenAI(base_url=base_url, api_key=api_key if api_key else "EMPTY")
+
+    api_key = (
+        api_key
+        if api_key and api_key != "EMPTY"
+        else os.environ.get("LLM_API_KEY", "EMPTY")
+    )
+
+    client = AsyncOpenAI(base_url=base_url, api_key=api_key)
 
     prompts = []
     for m in prompt_ls:
@@ -260,16 +267,25 @@ async def generate(
     return {"ans_ls": ret}
 
 
-@app.tool(output="prompt_ls,model_name,base_url,sampling_params,ret_path->ans_ls")
+@app.tool(
+    output="prompt_ls,model_name,base_url,sampling_params,ret_path,api_key->ans_ls"
+)
 async def multimodal_generate(
     prompt_ls: List[Union[str, Dict[str, Any]]],
     model_name: str,
     base_url: str,
     sampling_params: Dict[str, Any],
     ret_path: List[List[str]],
+    api_key: str = "EMPTY",
 ) -> Dict[str, List[str]]:
-    api_key = os.environ.get("LLM_API_KEY", "")
-    client = AsyncOpenAI(base_url=base_url, api_key=api_key if api_key else "EMPTY")
+
+    api_key = (
+        api_key
+        if api_key and api_key != "EMPTY"
+        else os.environ.get("LLM_API_KEY", "EMPTY")
+    )
+
+    client = AsyncOpenAI(base_url=base_url, api_key=api_key)
 
     prompts = []
     for m in prompt_ls:
