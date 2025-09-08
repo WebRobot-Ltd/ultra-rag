@@ -120,33 +120,46 @@ apiVersion: v1
 kind: Pod
 spec:
   containers:
-  - name: kaniko
-    image: gcr.io/kaniko-project/executor:latest
+  - name: docker
+    image: docker:20.10.17
     command:
-    - /kaniko/executor
+    - sleep
     args:
-    - --context=.
-    - --dockerfile=Dockerfile
-    - --destination=${DOCKER_IMAGE}:${DOCKER_TAG}
-    - --destination=${DOCKER_IMAGE}:latest
-    - --cache=true
-    - --cache-ttl=24h
-    - --verbosity=info
+    - 99d
+  - name: kaniko
+    image: gcr.io/kaniko-project/executor:v1.9.0-debug
+    imagePullPolicy: Always
+    command:
+    - /busybox/cat
     tty: true
     volumeMounts:
-    - name: docker-config
-      mountPath: /kaniko/.docker
+      - name: jenkins-docker-cfg
+        mountPath: /kaniko/.docker
   volumes:
-  - name: docker-config
-    secret:
-      secretName: docker-config
+    - name: jenkins-docker-cfg
+      projected:
+        sources:
+        - secret:
+            name: docker-config-secret
+            items:
+              - key: .dockerconfigjson
+                path: config.json
 """
                 }
             }
             steps {
-                script {
-                    echo "🐳 Build Docker image UltraRAG con Kaniko..."
-                    echo "✅ Immagine Docker buildata: ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                container('kaniko') {
+                    script {
+                        echo "🐳 Build Docker image UltraRAG con Kaniko..."
+                        sh """
+                            /kaniko/executor --context=\$(pwd) \\
+                                --dockerfile=Dockerfile \\
+                                --destination=${DOCKER_IMAGE}:${DOCKER_TAG} \\
+                                --destination=${DOCKER_IMAGE}:latest \\
+                                --build-arg BUILD_TYPE=${params.BUILD_TYPE} \\
+                                --verbosity=info
+                        """
+                    }
                 }
             }
         }
