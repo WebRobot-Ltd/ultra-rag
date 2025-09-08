@@ -123,7 +123,14 @@ spec:
   - name: kaniko
     image: gcr.io/kaniko-project/executor:latest
     command:
-    - cat
+    - /kaniko/executor
+    args:
+    - --context=.
+    - --dockerfile=Dockerfile
+    - --destination=${DOCKER_IMAGE}:${DOCKER_TAG}
+    - --destination=${DOCKER_IMAGE}:latest
+    - --cache=true
+    - --cache-ttl=24h
     tty: true
     volumeMounts:
     - name: docker-config
@@ -138,17 +145,6 @@ spec:
             steps {
                 script {
                     echo "🐳 Build Docker image UltraRAG..."
-                    
-                    sh '''
-                        /kaniko/executor \
-                            --context=. \
-                            --dockerfile=Dockerfile \
-                            --destination=${DOCKER_IMAGE}:${DOCKER_TAG} \
-                            --destination=${DOCKER_IMAGE}:latest \
-                            --cache=true \
-                            --cache-ttl=24h
-                    '''
-                    
                     echo "✅ Immagine Docker buildata: ${env.DOCKER_IMAGE}:${env.DOCKER_TAG}"
                 }
             }
