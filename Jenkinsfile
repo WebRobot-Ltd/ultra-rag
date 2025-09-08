@@ -191,3 +191,120 @@ metadata:
 data:
   MILVUS_HOST: "${MILVUS_HOST}"
   MILVUS_PORT: "${MILVUS_PORT}"
+EOF
+                        
+                        # Deploy Secret (placeholder)
+                        cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ultrarag-secrets
+  namespace: ${K8S_NAMESPACE}
+type: Opaque
+data:
+  ANTHROPIC_API_KEY: cGxhY2Vob2xkZXI=
+EOF
+                        
+                        # Deploy Service
+                        cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Service
+metadata:
+  name: ultrarag-service
+  namespace: ${K8S_NAMESPACE}
+spec:
+  selector:
+    app: ultrarag
+  ports:
+  - port: 8000
+    targetPort: 8000
+  type: ClusterIP
+EOF
+                        
+                        # Deploy Deployment
+                        cat <<EOF | kubectl apply -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ultrarag
+  namespace: ${K8S_NAMESPACE}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ultrarag
+  template:
+    metadata:
+      labels:
+        app: ultrarag
+    spec:
+      containers:
+      - name: ultrarag
+        image: ${DOCKER_IMAGE}:${DOCKER_TAG}
+        ports:
+        - containerPort: 8000
+        env:
+        - name: MILVUS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: ultrarag-config
+              key: MILVUS_HOST
+        - name: MILVUS_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: ultrarag-config
+              key: MILVUS_PORT
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ultrarag-secrets
+              key: ANTHROPIC_API_KEY
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1"
+          limits:
+            memory: "4Gi"
+            cpu: "2"
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 60
+          periodSeconds: 30
+EOF
+                        
+                        echo "✅ Deploy Kubernetes completato"
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            script {
+                echo "🏁 Build UltraRAG ${env.BUILD_NUMBER} completata"
+                echo "⏱️ Durata totale: ${currentBuild.durationString}"
+            }
+        }
+        failure {
+            script {
+                echo "❌ Pipeline UltraRAG fallita!"
+                echo "📋 Controlla i log per i dettagli"
+            }
+        }
+        success {
+            script {
+                echo "✅ Pipeline UltraRAG completata con successo!"
+                echo "🌐 UltraRAG disponibile su: ultrarag-service.${K8S_NAMESPACE}.svc.cluster.local:8000"
+            }
+        }
+    }
+}
