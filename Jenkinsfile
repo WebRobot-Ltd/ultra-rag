@@ -59,30 +59,14 @@ pipeline {
         }
 
         stage('Checkout') {
-            agent {
-                label 'master'
-            }
+            agent any
             steps {
                 checkout scm
             }
         }
 
         stage('Validate UltraRAG Structure') {
-            agent {
-                kubernetes {
-                    yaml """
-apiVersion: v1
-kind: Pod
-spec:
-  containers:
-  - name: git
-    image: alpine/git:latest
-    command:
-    - cat
-    tty: true
-"""
-                }
-            }
+            agent any
             steps {
                 script {
                     echo "🔍 Validazione struttura UltraRAG..."
@@ -108,12 +92,6 @@ apiVersion: v1
 kind: Pod
 spec:
   containers:
-  - name: docker
-    image: docker:20.10.17
-    command:
-    - sleep
-    args:
-    - 99d
   - name: kaniko
     image: gcr.io/kaniko-project/executor:v1.9.0-debug
     imagePullPolicy: Always
@@ -163,21 +141,7 @@ spec:
             when {
                 expression { return params.DEPLOY_K8S }
             }
-            agent {
-                kubernetes {
-                    yaml """
-apiVersion: v1
-kind: Pod
-spec:
-  containers:
-  - name: kubectl
-    image: bitnami/kubectl:latest
-    command:
-    - cat
-    tty: true
-"""
-                }
-            }
+            agent any
             steps {
                 script {
                     echo "☸️ Deploy UltraRAG su Kubernetes..."
