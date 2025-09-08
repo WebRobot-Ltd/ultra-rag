@@ -120,32 +120,31 @@ apiVersion: v1
 kind: Pod
 spec:
   containers:
-  - name: kaniko
-    image: gcr.io/kaniko-project/executor:latest
+  - name: docker
+    image: docker:latest
     command:
-    - /kaniko/executor
+    - sleep
     args:
-    - --context=.
-    - --dockerfile=Dockerfile
-    - --destination=${DOCKER_IMAGE}:${DOCKER_TAG}
-    - --destination=${DOCKER_IMAGE}:latest
-    - --cache=true
-    - --cache-ttl=24h
+    - infinity
     tty: true
     volumeMounts:
-    - name: docker-config
-      mountPath: /kaniko/.docker
+    - name: docker-sock
+      mountPath: /var/run/docker.sock
   volumes:
-  - name: docker-config
-    secret:
-      secretName: docker-config
+  - name: docker-sock
+    hostPath:
+      path: /var/run/docker.sock
 """
                 }
             }
             steps {
                 script {
                     echo "🐳 Build Docker image UltraRAG..."
-                    echo "✅ Immagine Docker buildata: ${env.DOCKER_IMAGE}:${env.DOCKER_TAG}"
+                    sh '''
+                        docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
+                        docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest
+                        echo "✅ Immagine Docker buildata: ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                    '''
                 }
             }
         }
