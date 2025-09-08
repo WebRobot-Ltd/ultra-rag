@@ -1,10 +1,7 @@
 import asyncio
-import ctypes
 import logging
 import os
-import signal
 import socket
-import subprocess
 import time
 from typing import Any, Dict, List, Union, Optional
 import mimetypes
@@ -17,96 +14,9 @@ import base64
 
 from fastmcp.exceptions import ToolError
 from ultrarag.server import UltraRAG_MCP_Server
+from ultrarag.utils import popen_follow_parent
 
-IS_POSIX = os.name == "posix"
-IS_WINDOWS = os.name == "nt"
 
-if IS_POSIX:
-    libc = ctypes.CDLL(None)
-else:
-    libc = None
-
-_windows_job_handle = None
-
-if IS_WINDOWS:
-    import ctypes.wintypes as wintypes
-
-    JobObjectExtendedLimitInformation = 9
-    JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE = 0x00002000
-
-    class JOBOBJECT_BASIC_LIMIT_INFORMATION(ctypes.Structure):
-        _fields_ = [
-            ("PerProcessUserTimeLimit", wintypes.LARGE_INTEGER),
-            ("PerJobUserTimeLimit", wintypes.LARGE_INTEGER),
-            ("LimitFlags", wintypes.DWORD),
-            ("MinimumWorkingSetSize", ctypes.c_size_t),
-            ("MaximumWorkingSetSize", ctypes.c_size_t),
-            ("ActiveProcessLimit", wintypes.DWORD),
-            ("Affinity", ctypes.c_size_t),
-            ("PriorityClass", wintypes.DWORD),
-            ("SchedulingClass", wintypes.DWORD),
-        ]
-
-    class IO_COUNTERS(ctypes.Structure):
-        _fields_ = [
-            ("ReadOperationCount", ctypes.c_ulonglong),
-            ("WriteOperationCount", ctypes.c_ulonglong),
-            ("OtherOperationCount", ctypes.c_ulonglong),
-            ("ReadTransferCount", ctypes.c_ulonglong),
-            ("WriteTransferCount", ctypes.c_ulonglong),
-            ("OtherTransferCount", ctypes.c_ulonglong),
-        ]
-
-    class JOBOBJECT_EXTENDED_LIMIT_INFORMATION(ctypes.Structure):
-        _fields_ = [
-            ("BasicLimitInformation", JOBOBJECT_BASIC_LIMIT_INFORMATION),
-            ("IoInfo", IO_COUNTERS),
-            ("ProcessMemoryLimit", ctypes.c_size_t),
-            ("JobMemoryLimit", ctypes.c_size_t),
-            ("PeakProcessMemoryUsed", ctypes.c_size_t),
-            ("PeakJobMemoryUsed", ctypes.c_size_t),
-        ]
-
-    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
-
-    def _windows_ensure_job_object():
-        global _windows_job_handle
-        if _windows_job_handle:
-            return _windows_job_handle
-
-        hJob = kernel32.CreateJobObjectW(None, None)
-        if not hJob:
-            raise OSError(ctypes.get_last_error(), "CreateJobObjectW failed")
-
-        info = JOBOBJECT_EXTENDED_LIMIT_INFORMATION()
-        info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
-
-        res = kernel32.SetInformationJobObject(
-            hJob,
-            JobObjectExtendedLimitInformation,
-            ctypes.byref(info),
-            ctypes.sizeof(info),
-        )
-        if not res:
-            err = ctypes.get_last_error()
-            kernel32.CloseHandle(hJob)
-            raise OSError(err, "SetInformationJobObject failed")
-
-        _windows_job_handle = hJob
-        return _windows_job_handle
-
-    kernel32.CreateJobObjectW.restype = wintypes.HANDLE
-    kernel32.SetInformationJobObject.argtypes = [
-        wintypes.HANDLE,
-        wintypes.INT,
-        wintypes.LPVOID,
-        wintypes.DWORD,
-    ]
-    kernel32.SetInformationJobObject.restype = wintypes.BOOL
-    kernel32.AssignProcessToJobObject.argtypes = [wintypes.HANDLE, wintypes.HANDLE]
-    kernel32.AssignProcessToJobObject.restype = wintypes.BOOL
-    kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
-    kernel32.CloseHandle.restype = wintypes.BOOL
 app = UltraRAG_MCP_Server("generation")
 httpx_logger.setLevel(logging.WARNING)
 
@@ -114,30 +24,6 @@ httpx_logger.setLevel(logging.WARNING)
 def _is_port_in_use(port: int) -> bool:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         return s.connect_ex(("localhost", port)) == 0
-
-
-def _set_pdeathsig():
-    if IS_POSIX and libc is not None:
-        # 1 == PR_SET_PDEATHSIG
-        libc.prctl(1, signal.SIGTERM)
-
-
-def _popen_follow_parent(command: List[str], env: Optional[Dict[str, str]] = None):
-    if IS_POSIX:
-        return subprocess.Popen(command, env=env, preexec_fn=_set_pdeathsig)
-    elif IS_WINDOWS:
-        hJob = _windows_ensure_job_object()
-        proc = subprocess.Popen(command, env=env)
-        hProcess = wintypes.HANDLE(proc._handle)
-        ok = kernel32.AssignProcessToJobObject(hJob, hProcess)
-        if not ok:
-            logging.warning(
-                "AssignProcessToJobObject failed; child may outlive parent."
-            )
-        return proc
-    else:
-        # Fallback: just start the process
-        return subprocess.Popen(command, env=env)
 
 
 def _wait_for_vllm_ready(base_url: str, timeout: int, api_key: str):
@@ -195,7 +81,7 @@ def initialize_local_vllm(
     env["CUDA_VISIBLE_DEVICES"] = gpu_ids
 
     app.logger.info(f"Starting vLLM model on GPU(s): {gpu_ids}")
-    _popen_follow_parent(command, env=env)
+    popen_follow_parent(command, env=env)
 
     base_url = f"http://localhost:{port}/v1"
     timeout = 999
