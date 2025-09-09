@@ -1,6 +1,5 @@
 name: ultrarag
 channels:
-- pytorch-cpu
 - pytorch
 - conda-forge
 - defaults
@@ -271,6 +270,7 @@ dependencies:
   - pytorch-cpu
   - torchvision-cpu
   - torchaudio-cpu
+  - cpuonly
   - tqdm==4.67.1
   - transformers==4.55.0
   - typer==0.16.0
