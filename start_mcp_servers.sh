@@ -47,7 +47,7 @@ start_server() {
     # Start server in background with proper Python path and HTTP transport
     cd "$SCRIPT_DIR"
     local port=$((8000 + server_index))
-    python "$server_path" --transport http --port $port &
+    python "$server_path" transport=http port=$port &
     local pid=$!
     
     # Store PID and port for cleanup and health checks
