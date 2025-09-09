@@ -1,58 +1,3 @@
-# UltraRAG MCP Servers Docker Image
-# Starts all available MCP servers for AI agent access
-
-FROM ubuntu:22.04
-
-# Set environment variables
-ENV DEBIAN_FRONTEND=noninteractive
-ENV CUDA_VISIBLE_DEVICES=""
-ENV PYTHONUNBUFFERED=1
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    python3 \
-    python3-pip \
-    python3-venv \
-    curl \
-    wget \
-    git \
-    build-essential \
-    libopenblas-dev \
-    libomp-dev \
-    pkg-config \
-    python3-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# Create Python virtual environment
-RUN python3 -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-
-# Upgrade pip and install build tools
-RUN pip3 install --no-cache-dir -U pip setuptools wheel
-
-# Create working directory
-WORKDIR /app
-
-# Copy requirements and install Python dependencies
-COPY requirements.txt .
-RUN pip3 install --no-cache-dir -r requirements.txt
-
-# Install PyTorch CPU
-RUN pip3 install --no-cache-dir torch==2.1.0+cpu torchvision==0.16.0+cpu torchaudio==2.1.0+cpu \
-    -f https://download.pytorch.org/whl/torch_stable.html
-
-# Copy the entire project
-COPY . .
-
-# Install the project in development mode
-RUN pip3 install --no-cache-dir -e .
-
-# Create data and logs directories
-RUN mkdir -p /app/data /app/logs && \
-    chmod -R 777 /app/data /app/logs
-
-# Create startup script
-RUN cat > /app/start_mcp_servers.sh << 'EOF'
 #!/bin/bash
 
 # UltraRAG MCP Servers Launcher for Docker
@@ -89,6 +34,7 @@ print_status() {
 
 start_server() {
     local server_name=$1
+    local server_index=$2
     local server_path="$SERVERS_DIR/$server_name/src/${server_name}.py"
     
     if [[ ! -f "$server_path" ]]; then
@@ -98,15 +44,16 @@ start_server() {
     
     print_status $BLUE "🚀 Starting MCP server: $server_name"
     
-    # Start server in background with proper Python path
+    # Start server in background with proper Python path and HTTP transport
     cd "$SCRIPT_DIR"
-    python3 "$server_path" &
+    local port=$((8000 + server_index))
+    python "$server_path" --transport http --port $port &
     local pid=$!
     
-    # Store PID for cleanup
-    echo $pid >> /tmp/ultrarag_mcp_pids
+    # Store PID and port for cleanup and health checks
+    echo "$pid:$port:$server_name" >> /tmp/ultrarag_mcp_pids
     
-    print_status $GREEN "✅ Server $server_name started with PID $pid"
+    print_status $GREEN "✅ Server $server_name started with PID $pid on port $port"
     return 0
 }
 
@@ -118,10 +65,12 @@ start_all_servers() {
     > /tmp/ultrarag_mcp_pids
     
     local started=0
+    local index=0
     for server in "${SERVERS[@]}"; do
-        if start_server "$server"; then
+        if start_server "$server" "$index"; then
             ((started++))
         fi
+        ((index++))
         sleep 2  # Delay between starts
     done
     
@@ -137,9 +86,9 @@ stop_all_servers() {
     print_status $YELLOW "🛑 Stopping all MCP servers..."
     
     if [[ -f /tmp/ultrarag_mcp_pids ]]; then
-        while read -r pid; do
+        while IFS=: read -r pid port name; do
             if kill -0 "$pid" 2>/dev/null; then
-                print_status $BLUE "Stopping process $pid"
+                print_status $BLUE "Stopping $name on port $port (PID $pid)"
                 kill "$pid"
             fi
         done < /tmp/ultrarag_mcp_pids
@@ -167,28 +116,14 @@ while true; do
     sleep 30
     # Check if any servers died and restart them
     if [[ -f /tmp/ultrarag_mcp_pids ]]; then
-        while read -r pid; do
+        local index=0
+        while IFS=: read -r pid port name; do
             if ! kill -0 "$pid" 2>/dev/null; then
-                print_status $YELLOW "⚠️  Server with PID $pid stopped unexpectedly"
+                print_status $YELLOW "⚠️  Server $name on port $port (PID $pid) stopped unexpectedly"
+                print_status $BLUE "🔄 Restarting $name..."
+                start_server "$name" "$index"
             fi
+            ((index++))
         done < /tmp/ultrarag_mcp_pids
     fi
 done
-EOF
-
-# Make startup script executable
-RUN chmod +x /app/start_mcp_servers.sh
-
-# Expose ports for MCP servers (if needed)
-EXPOSE 8000-8010
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
-
-# Set MCP transport and ports
-ENV MCP_TRANSPORT=http
-ENV MCP_PORT=8000
-
-# Start all MCP servers
-CMD ["/app/start_mcp_servers.sh"]
