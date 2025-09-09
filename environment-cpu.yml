@@ -77,6 +77,10 @@ dependencies:
 - zeromq=4.3.5=h6a678d5_0
 - zipp=3.23.0=pyhd8ed1ab_0
 - zlib=1.2.13=h5eee18b_1
+- pytorch
+- torchvision
+- torchaudio
+- cpuonly
 - pip:
   - absl-py==2.3.1
   - aiohappyeyeballs==2.6.1
@@ -267,10 +271,6 @@ dependencies:
   - threadpoolctl==3.6.0
   - tiktoken==0.11.0
   - tokenizers==0.21.4
-  - pytorch
-  - torchvision
-  - torchaudio
-  - cpuonly
   - tqdm==4.67.1
   - transformers==4.55.0
   - typer==0.16.0
