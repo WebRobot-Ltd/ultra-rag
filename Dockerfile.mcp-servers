@@ -1,7 +1,7 @@
 # UltraRAG MCP Servers Docker Image
 # Starts all available MCP servers for AI agent access
 
-FROM ubuntu:24.04
+FROM python:3.11-slim
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
@@ -10,9 +10,6 @@ ENV PYTHONUNBUFFERED=1
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    python3.11 \
-    python3.11-pip \
-    python3.11-venv \
     curl \
     wget \
     git \
@@ -20,11 +17,10 @@ RUN apt-get update && apt-get install -y \
     libopenblas-dev \
     libomp-dev \
     pkg-config \
-    python3.11-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Create Python virtual environment
-RUN python3.11 -m venv /opt/venv
+RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 # Upgrade pip and install build tools
