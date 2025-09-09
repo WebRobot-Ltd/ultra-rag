@@ -151,6 +151,10 @@ start_all_servers
 # Keep container running and monitor servers
 print_status $YELLOW "👀 Servers running... (Press Ctrl+C to stop)"
 
+# Add immediate sleep to prevent container from exiting too quickly
+print_status $BLUE "⏳ Waiting 10 seconds to ensure servers are stable..."
+sleep 10
+
 # Test health check after longer delay
 print_status $BLUE "🔍 Waiting 30 seconds before testing health check endpoint..."
 sleep 30
