@@ -174,6 +174,12 @@ if [[ -f /tmp/health_server_pid ]]; then
         print_status $GREEN "✅ Health server still running (PID $HEALTH_PID)"
     else
         print_status $RED "❌ Health server died! Restarting..."
+        # Kill any process using port 8000 before restarting
+        if lsof -ti:8000 >/dev/null 2>&1; then
+            print_status $YELLOW "🔄 Killing processes using port 8000..."
+            lsof -ti:8000 | xargs kill -9 2>/dev/null || true
+            sleep 2
+        fi
         start_health_server
     fi
 else
@@ -229,6 +235,12 @@ while true; do
         HEALTH_PID=$(cat /tmp/health_server_pid)
         if ! kill -0 "$HEALTH_PID" 2>/dev/null; then
             print_status $RED "❌ Health server died! Restarting..."
+            # Kill any process using port 8000 before restarting
+            if lsof -ti:8000 >/dev/null 2>&1; then
+                print_status $YELLOW "🔄 Killing processes using port 8000..."
+                lsof -ti:8000 | xargs kill -9 2>/dev/null || true
+                sleep 2
+            fi
             start_health_server
         else
             print_status $GREEN "✅ Health server still running (PID $HEALTH_PID)"
