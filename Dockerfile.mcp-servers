@@ -191,5 +191,5 @@ ENV MCP_TRANSPORT=http
 ENV MCP_PORT=8000
 
 # Start all MCP servers
-ENTRYPOINT ["/bin/bash"]
-CMD ["/app/start_mcp_servers.sh"]
+ENTRYPOINT ["/bin/bash", "-c"]
+CMD ["python servers/sayhello/src/sayhello.py transport=http port=8000"]
