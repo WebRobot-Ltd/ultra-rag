@@ -1,0 +1,84 @@
+FROM ubuntu:22.04
+
+LABEL maintainer="WebRobot Ltd"
+LABEL description="UltraRAG v2.0 - Advanced RAG Framework with MCP Support (Ultra Minimal CPU Only)"
+LABEL version="2.0-ultra-minimal"
+
+ENV PATH="/opt/miniconda/bin:$PATH"
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV DEBIAN_FRONTEND=noninteractive
+ENV CUDA_VISIBLE_DEVICES=""
+
+# Install system dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        bzip2 \
+        ca-certificates \
+        curl \
+        git \
+        wget \
+        netcat \
+        build-essential \
+    && update-ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create user
+RUN groupadd -r ultrarag && useradd -r -g ultrarag ultrarag
+
+# Set working directory
+WORKDIR /ultrarag
+
+# Install Miniconda
+WORKDIR /opt
+ADD https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh /opt/miniconda.sh
+WORKDIR /ultrarag
+
+# Copy project files
+COPY . .
+
+# Install Miniconda
+RUN chmod +x /opt/miniconda.sh && \
+    /opt/miniconda.sh -b -p /opt/miniconda && \
+    rm -f /opt/miniconda.sh
+
+# Accept conda terms
+RUN conda --version && \
+    conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main && \
+    conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+
+# Create ultra-minimal conda environment
+RUN conda env create -f environment-ultra-minimal.yml
+
+# Activate environment and install PyTorch CPU-only via pip
+RUN /opt/miniconda/envs/ultrarag/bin/pip install --no-cache-dir \
+    torch==2.1.0+cpu \
+    torchvision==0.16.0+cpu \
+    torchaudio==2.1.0+cpu \
+    -f https://download.pytorch.org/whl/torch_stable.html
+
+# Install faiss-cpu via pip
+RUN /opt/miniconda/envs/ultrarag/bin/pip install --no-cache-dir faiss-cpu
+
+# Install remaining dependencies via pip
+RUN /opt/miniconda/envs/ultrarag/bin/pip install --no-cache-dir -e .
+
+# Set environment variables
+ENV CONDA_DEFAULT_ENV=ultrarag
+ENV PATH="/opt/miniconda/envs/ultrarag/bin:$PATH"
+
+# Change ownership
+RUN chown -R ultrarag:ultrarag /ultrarag
+
+# Switch to non-root user
+USER ultrarag
+
+# Expose port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Default command
+CMD ["python", "-m", "ultrarag.main"]

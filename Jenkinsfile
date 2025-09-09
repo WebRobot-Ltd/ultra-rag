@@ -132,7 +132,7 @@ spec:
                         echo "🐳 Build Docker image UltraRAG con Kaniko..."
                         sh """
                             /kaniko/executor --context=\$(pwd) \\
-                                --dockerfile=Dockerfile.cpu \\
+                                --dockerfile=Dockerfile.ultra-minimal \\
                                 --destination=${DOCKER_IMAGE}:${DOCKER_TAG} \\
                                 --destination=${DOCKER_IMAGE}:latest \\
                                 --build-arg BUILD_TYPE=${params.BUILD_TYPE} \\
