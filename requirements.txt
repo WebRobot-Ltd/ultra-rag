@@ -1,6 +1,6 @@
 # Core dependencies
 fastmcp>=0.1.0
-infinity-emb>=0.1.0
+infinity-emb>=0.0.70
 ultrarag
 
 # Server dependencies
