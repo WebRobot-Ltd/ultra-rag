@@ -6,18 +6,48 @@ set -e
 SCRIPT_DIR="/ultrarag"
 SERVERS_DIR="$SCRIPT_DIR/servers"
 
+# Start simple health check server
+start_health_server() {
+    python3 -c "
+import http.server
+import socketserver
+import json
+from urllib.parse import urlparse
+
+class HealthHandler(http.server.SimpleHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == '/health':
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            response = {'status': 'healthy', 'service': 'ultrarag-mcp'}
+            self.wfile.write(json.dumps(response).encode())
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+with socketserver.TCPServer(('', 8000), HealthHandler) as httpd:
+    httpd.serve_forever()
+" &
+    
+    HEALTH_PID=$!
+    echo "$HEALTH_PID" > /tmp/health_server_pid
+    print_status $GREEN "✅ Health check server started on port 8000 (PID $HEALTH_PID)"
+}
+
 # List of available MCP servers with their default ports
+# Port 8000 is reserved for health check server
 declare -A SERVERS=(
-    ["sayhello"]="8000"
-    ["retriever"]="8001"
-    ["generation"]="8002"
-    ["corpus"]="8003"
-    ["reranker"]="8004"
-    ["evaluation"]="8005"
-    ["benchmark"]="8006"
-    ["custom"]="8007"
-    ["prompt"]="8008"
-    ["router"]="8009"
+    ["sayhello"]="8001"
+    ["retriever"]="8002"
+    ["generation"]="8003"
+    ["corpus"]="8004"
+    ["reranker"]="8005"
+    ["evaluation"]="8006"
+    ["benchmark"]="8007"
+    ["custom"]="8008"
+    ["prompt"]="8009"
+    ["router"]="8010"
 )
 
 # Colors for output
@@ -111,6 +141,9 @@ cleanup() {
 
 # Set up signal handlers
 trap cleanup SIGINT SIGTERM
+
+# Start health check server first
+start_health_server
 
 # Start all servers
 start_all_servers

@@ -12,12 +12,6 @@ def greet(name: str) -> Dict[str, str]:
     return {"msg": ret}
 
 
-# Add health check endpoint
-@app.route("/health")
-def health_check():
-    return {"status": "healthy", "service": "sayhello"}
-
-
 if __name__ == "__main__":
     import sys
     import argparse
