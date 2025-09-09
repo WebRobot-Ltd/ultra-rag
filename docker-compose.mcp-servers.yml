@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  ultrarag-mcp-servers:
+    build:
+      context: .
+      dockerfile: Dockerfile.mcp-servers
+    container_name: ultrarag-mcp-servers
+    restart: unless-stopped
+    environment:
+      - CUDA_VISIBLE_DEVICES=""
+      - PYTHONUNBUFFERED=1
+    volumes:
+      # Mount data directory for persistent storage
+      - ./data:/app/data
+      # Mount logs directory
+      - ./logs:/app/logs
+    ports:
+      # Expose ports for different MCP servers if they need HTTP endpoints
+      - "8000:8000"  # sayhello
+      - "8001:8001"  # corpus
+      - "8002:8002"  # custom
+      - "8003:8003"  # evaluation
+      - "8004:8004"  # generation
+      - "8005:8005"  # prompt
+      - "8006:8006"  # reranker
+      - "8007:8007"  # retriever
+      - "8008:8008"  # benchmark
+    networks:
+      - ultrarag-network
+    healthcheck:
+      test: ["CMD", "ps", "aux", "|", "grep", "-v", "grep", "|", "grep", "python3"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+networks:
+  ultrarag-network:
+    driver: bridge
+
+volumes:
+  ultrarag-data:
+    driver: local
+  ultrarag-logs:
+    driver: local

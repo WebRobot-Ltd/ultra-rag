@@ -1,0 +1,30 @@
+# Core dependencies
+fastmcp>=0.1.0
+infinity-emb>=0.1.0
+ultrarag
+
+# Server dependencies
+flask>=2.0.0
+aiohttp>=3.8.0
+
+# Data processing
+numpy>=1.21.0
+pandas>=1.3.0
+jsonlines>=3.0.0
+tqdm>=4.65.0
+
+# ML/AI
+faiss-cpu>=1.7.0
+openai>=1.0.0
+jinja2>=3.0.0
+
+# Utilities
+python-dotenv>=0.19.0
+requests>=2.26.0
+urllib3>=1.26.0
+pathlib>=1.0.0
+
+# Optional dependencies
+lancedb>=0.3.0  # for vector store
+tavily-python>=0.1.0  # for search
+exa-py>=1.0.0  # for search
