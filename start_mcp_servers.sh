@@ -3,8 +3,14 @@
 # UltraRAG MCP Servers Launcher for Docker
 set -e
 
-SCRIPT_DIR="/ultrarag"
-SERVERS_DIR="$SCRIPT_DIR/servers"
+# Detect if running in Docker or locally
+if [[ -d "/ultrarag" ]]; then
+    SCRIPT_DIR="/ultrarag"
+    SERVERS_DIR="$SCRIPT_DIR/servers"
+else
+    SCRIPT_DIR="$(pwd)"
+    SERVERS_DIR="$SCRIPT_DIR/servers"
+fi
 
 # Start simple health check server
 start_health_server() {
@@ -151,7 +157,7 @@ trap cleanup SIGINT SIGTERM
 start_health_server
 
 # Start all servers
-start_all_servers
+# start_all_servers  # Temporarily disabled for debugging
 
 # Keep container running and monitor servers
 print_status $YELLOW "👀 Servers running... (Press Ctrl+C to stop)"
