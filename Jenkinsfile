@@ -230,6 +230,8 @@ spec:
       labels:
         app: ultrarag
     spec:
+      imagePullSecrets:
+      - name: docker-config-secret
       containers:
       - name: ultrarag
         image: ${DOCKER_IMAGE}:${DOCKER_TAG}
