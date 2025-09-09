@@ -90,6 +90,11 @@ start_server() {
     echo "$pid:$port:$server_name" >> /tmp/ultrarag_mcp_pids
     
     print_status $GREEN "✅ Server $server_name started with PID $pid on port $port"
+    
+    # Add sleep after each server to prevent container from exiting too quickly
+    print_status $BLUE "⏳ Waiting 5 seconds after starting $server_name..."
+    sleep 5
+    
     return 0
 }
 
@@ -152,8 +157,35 @@ start_all_servers
 print_status $YELLOW "👀 Servers running... (Press Ctrl+C to stop)"
 
 # Add immediate sleep to prevent container from exiting too quickly
-print_status $BLUE "⏳ Waiting 10 seconds to ensure servers are stable..."
-sleep 10
+print_status $BLUE "⏳ Waiting 30 seconds to ensure servers are stable..."
+sleep 30
+
+# Check if servers are still running after initial sleep
+print_status $BLUE "🔍 Checking server status after initial sleep..."
+if [[ -f /tmp/health_server_pid ]]; then
+    HEALTH_PID=$(cat /tmp/health_server_pid)
+    if kill -0 "$HEALTH_PID" 2>/dev/null; then
+        print_status $GREEN "✅ Health server still running (PID $HEALTH_PID)"
+    else
+        print_status $RED "❌ Health server died! Restarting..."
+        start_health_server
+    fi
+else
+    print_status $RED "❌ Health server PID file not found!"
+fi
+
+if [[ -f /tmp/ultrarag_mcp_pids ]]; then
+    while IFS=: read -r pid port name; do
+        if kill -0 "$pid" 2>/dev/null; then
+            print_status $GREEN "✅ Server $name still running (PID $pid)"
+        else
+            print_status $RED "❌ Server $name died! Restarting..."
+            start_server "$name"
+        fi
+    done < /tmp/ultrarag_mcp_pids
+else
+    print_status $RED "❌ MCP servers PID file not found!"
+fi
 
 # Test health check after longer delay
 print_status $BLUE "🔍 Waiting 30 seconds before testing health check endpoint..."
