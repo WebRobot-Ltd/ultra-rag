@@ -52,7 +52,7 @@ RUN conda --version && \
     conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
 
 # Use CPU-only environment
-RUN conda env create -f environment-cpu.yml
+RUN conda env create -f environment-cpu-minimal.yml
 
 # Activate environment and install dependencies
 ENV PATH="/opt/miniconda/envs/ultrarag/bin:$PATH"
