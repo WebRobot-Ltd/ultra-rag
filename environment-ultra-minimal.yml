@@ -69,5 +69,3 @@ dependencies:
 - pydantic-settings
 - starlette
 - sse-starlette
-- prometheus-client
-- prometheus-fastapi-instrumentator

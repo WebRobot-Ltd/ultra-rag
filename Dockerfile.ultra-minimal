@@ -57,8 +57,11 @@ RUN /opt/miniconda/envs/ultrarag/bin/pip install --no-cache-dir \
     torchaudio==2.1.0+cpu \
     -f https://download.pytorch.org/whl/torch_stable.html
 
-# Install faiss-cpu via pip
-RUN /opt/miniconda/envs/ultrarag/bin/pip install --no-cache-dir faiss-cpu
+# Install faiss-cpu and prometheus packages via pip
+RUN /opt/miniconda/envs/ultrarag/bin/pip install --no-cache-dir \
+    faiss-cpu \
+    prometheus-client \
+    prometheus-fastapi-instrumentator
 
 # Install remaining dependencies via pip
 RUN /opt/miniconda/envs/ultrarag/bin/pip install --no-cache-dir -e .
