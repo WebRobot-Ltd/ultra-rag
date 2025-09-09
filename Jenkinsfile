@@ -153,6 +153,7 @@ spec:
 apiVersion: v1
 kind: Pod
 spec:
+  serviceAccountName: jenkins
   containers:
   - name: kubectl
     image: alpine/k8s:1.28.2
