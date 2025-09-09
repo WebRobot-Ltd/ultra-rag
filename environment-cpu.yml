@@ -1,5 +1,6 @@
 name: ultrarag
 channels:
+- pytorch-cpu
 - pytorch
 - conda-forge
 - defaults
@@ -267,9 +268,9 @@ dependencies:
   - threadpoolctl==3.6.0
   - tiktoken==0.11.0
   - tokenizers==0.21.4
-  - torch==2.7.1+cpu
-  - torchaudio==2.7.1+cpu
-  - torchvision==0.22.1+cpu
+  - pytorch-cpu
+  - torchvision-cpu
+  - torchaudio-cpu
   - tqdm==4.67.1
   - transformers==4.55.0
   - typer==0.16.0
