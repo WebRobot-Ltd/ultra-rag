@@ -157,10 +157,7 @@ trap cleanup SIGINT SIGTERM
 start_health_server
 
 # Start all servers
-# start_all_servers  # Temporarily disabled for debugging
-
-# Start only sayhello server for debugging
-start_server "sayhello" "8001"
+start_all_servers
 
 # Keep container running and monitor servers
 print_status $YELLOW "👀 Servers running... (Press Ctrl+C to stop)"
