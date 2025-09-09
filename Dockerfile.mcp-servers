@@ -1,57 +1,80 @@
-# UltraRAG MCP Servers Docker Image
-# Starts all available MCP servers for AI agent access
+FROM ubuntu:22.04
 
-FROM python:3.11-slim
+LABEL maintainer="WebRobot Ltd"
+LABEL description="UltraRAG v2.0 - Advanced RAG Framework with MCP Support (MCP Servers)"
+LABEL version="2.0-mcp-servers"
 
-# Set environment variables
+ENV PATH="/opt/miniconda/bin:$PATH"
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
 ENV DEBIAN_FRONTEND=noninteractive
 ENV CUDA_VISIBLE_DEVICES=""
-ENV PYTHONUNBUFFERED=1
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
-    curl \
-    wget \
-    git \
-    build-essential \
-    libopenblas-dev \
-    libomp-dev \
-    pkg-config \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        bzip2 \
+        ca-certificates \
+        curl \
+        git \
+        wget \
+        netcat \
+        build-essential \
+    && update-ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
 
-# Create Python virtual environment
-RUN python -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
+# Create user
+RUN groupadd -r ultrarag && useradd -r -g ultrarag ultrarag
 
-# Upgrade pip and install build tools
-RUN pip3 install --no-cache-dir -U pip setuptools wheel
+# Set working directory
+WORKDIR /ultrarag
 
-# Create working directory
-WORKDIR /app
+# Install Miniconda
+WORKDIR /opt
+ADD https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh /opt/miniconda.sh
+WORKDIR /ultrarag
 
-# Copy requirements and install Python dependencies
-COPY requirements.txt .
-RUN pip3 install --no-cache-dir -r requirements.txt
-
-# Install PyTorch CPU
-RUN pip3 install --no-cache-dir torch==2.1.0+cpu torchvision==0.16.0+cpu torchaudio==2.1.0+cpu \
-    -f https://download.pytorch.org/whl/torch_stable.html
-
-# Copy the entire project
+# Copy project files
 COPY . .
 
-# Install the project in development mode
-RUN pip3 install --no-cache-dir -e .
+# Install Miniconda
+RUN chmod +x /opt/miniconda.sh && \
+    /opt/miniconda.sh -b -p /opt/miniconda && \
+    rm -f /opt/miniconda.sh
 
-# Create data and logs directories
-RUN mkdir -p /app/data /app/logs && \
-    chmod -R 777 /app/data /app/logs
+# Accept conda terms
+RUN conda --version && \
+    conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main && \
+    conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
 
-# Copy the startup script
-COPY start_mcp_servers.sh /app/start_mcp_servers.sh
+# Create ultra-minimal conda environment
+RUN conda env create -f environment-ultra-minimal.yml
 
-# Make startup script executable
-RUN chmod +x /app/start_mcp_servers.sh
+# Activate environment and install PyTorch CPU-only via pip
+RUN /opt/miniconda/envs/ultrarag/bin/pip install --no-cache-dir \
+    torch==2.1.0+cpu \
+    torchvision==0.16.0+cpu \
+    torchaudio==2.1.0+cpu \
+    -f https://download.pytorch.org/whl/torch_stable.html
+
+# Install faiss-cpu and prometheus packages via pip
+RUN /opt/miniconda/envs/ultrarag/bin/pip install --no-cache-dir \
+    faiss-cpu \
+    prometheus-client \
+    prometheus-fastapi-instrumentator
+
+# Install remaining dependencies via pip
+RUN /opt/miniconda/envs/ultrarag/bin/pip install --no-cache-dir -e .
+
+# Set environment variables
+ENV CONDA_DEFAULT_ENV=ultrarag
+ENV PATH="/opt/miniconda/envs/ultrarag/bin:$PATH"
+
+# Change ownership
+RUN chown -R ultrarag:ultrarag /ultrarag
+
+# Switch to non-root user
+USER ultrarag
 
 # Expose ports for MCP servers
 EXPOSE 8000-8009
@@ -65,4 +88,4 @@ ENV MCP_TRANSPORT=http
 ENV MCP_PORT=8000
 
 # Start all MCP servers
-CMD ["/app/start_mcp_servers.sh"]
+CMD ["./start_mcp_servers.sh"]
