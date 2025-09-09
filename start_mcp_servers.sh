@@ -3,7 +3,7 @@
 # UltraRAG MCP Servers Launcher for Docker
 set -e
 
-SCRIPT_DIR="/app"
+SCRIPT_DIR="/ultrarag"
 SERVERS_DIR="$SCRIPT_DIR/servers"
 
 # List of available MCP servers with their default ports
