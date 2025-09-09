@@ -151,10 +151,32 @@ start_all_servers
 # Keep container running and monitor servers
 print_status $YELLOW "👀 Servers running... (Press Ctrl+C to stop)"
 
-# Test health check immediately
+# Test health check after longer delay
+print_status $BLUE "🔍 Waiting 30 seconds before testing health check endpoint..."
+sleep 30
 print_status $BLUE "🔍 Testing health check endpoint..."
-sleep 5
 curl -f http://localhost:8000/health && print_status $GREEN "✅ Health check OK" || print_status $RED "❌ Health check failed"
+
+# Check if servers are still running
+print_status $BLUE "🔍 Checking if servers are still running..."
+if [[ -f /tmp/health_server_pid ]]; then
+    HEALTH_PID=$(cat /tmp/health_server_pid)
+    if kill -0 "$HEALTH_PID" 2>/dev/null; then
+        print_status $GREEN "✅ Health server still running (PID $HEALTH_PID)"
+    else
+        print_status $RED "❌ Health server died!"
+    fi
+fi
+
+if [[ -f /tmp/ultrarag_mcp_pids ]]; then
+    while IFS=: read -r pid port name; do
+        if kill -0 "$pid" 2>/dev/null; then
+            print_status $GREEN "✅ Server $name still running (PID $pid)"
+        else
+            print_status $RED "❌ Server $name died!"
+        fi
+    done < /tmp/ultrarag_mcp_pids
+fi
 
 while true; do
     print_status $BLUE "🔄 Monitoring loop iteration $(date)"
