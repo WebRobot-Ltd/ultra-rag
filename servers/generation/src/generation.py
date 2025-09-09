@@ -248,4 +248,17 @@ async def multimodal_generate(
 
 
 if __name__ == "__main__":
-    app.run(transport="stdio")
+    import sys
+    import argparse
+    
+    parser = argparse.ArgumentParser(description='UltraRAG MCP Server - Generation')
+    parser.add_argument('--transport', default='stdio', choices=['stdio', 'http'], help='Transport type')
+    parser.add_argument('--port', type=int, default=8002, help='Port for HTTP transport')
+    parser.add_argument('--host', default='0.0.0.0', help='Host for HTTP transport')
+    
+    args = parser.parse_args()
+    
+    if args.transport == 'http':
+        app.run(transport="http", host=args.host, port=args.port)
+    else:
+        app.run(transport="stdio")

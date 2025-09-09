@@ -6,17 +6,18 @@ set -e
 SCRIPT_DIR="/app"
 SERVERS_DIR="$SCRIPT_DIR/servers"
 
-# List of available MCP servers
-SERVERS=(
-    "sayhello"
-    "corpus"
-    "custom" 
-    "evaluation"
-    "generation"
-    "prompt"
-    "reranker"
-    "retriever"
-    "benchmark"
+# List of available MCP servers with their default ports
+declare -A SERVERS=(
+    ["sayhello"]="8000"
+    ["retriever"]="8001"
+    ["generation"]="8002"
+    ["corpus"]="8003"
+    ["reranker"]="8004"
+    ["evaluation"]="8005"
+    ["benchmark"]="8006"
+    ["custom"]="8007"
+    ["prompt"]="8008"
+    ["router"]="8009"
 )
 
 # Colors for output
@@ -34,7 +35,6 @@ print_status() {
 
 start_server() {
     local server_name=$1
-    local server_index=$2
     local server_path="$SERVERS_DIR/$server_name/src/${server_name}.py"
     
     if [[ ! -f "$server_path" ]]; then
@@ -42,12 +42,18 @@ start_server() {
         return 1
     fi
     
-    print_status $BLUE "🚀 Starting MCP server: $server_name"
+    # Get port from SERVERS array
+    local port=${SERVERS[$server_name]}
+    if [[ -z "$port" ]]; then
+        print_status $RED "❌ No port configured for server $server_name"
+        return 1
+    fi
+    
+    print_status $BLUE "🚀 Starting MCP server: $server_name on port $port"
     
     # Start server in background with proper Python path and HTTP transport
     cd "$SCRIPT_DIR"
-    local port=$((8000 + server_index))
-    python "$server_path" transport=http port=$port &
+    python "$server_path" --transport http --port $port &
     local pid=$!
     
     # Store PID and port for cleanup and health checks
@@ -65,20 +71,19 @@ start_all_servers() {
     > /tmp/ultrarag_mcp_pids
     
     local started=0
-    local index=0
-    for server in "${SERVERS[@]}"; do
-        if start_server "$server" "$index"; then
+    for server_name in "${!SERVERS[@]}"; do
+        if start_server "$server_name"; then
             ((started++))
         fi
-        ((index++))
         sleep 2  # Delay between starts
     done
     
     print_status $GREEN "🎉 Started $started MCP servers"
     echo ""
     print_status $BLUE "Available servers:"
-    for server in "${SERVERS[@]}"; do
-        echo "  - $server"
+    for server_name in "${!SERVERS[@]}"; do
+        local port=${SERVERS[$server_name]}
+        echo "  - $server_name (port $port)"
     done
 }
 
@@ -116,14 +121,12 @@ while true; do
     sleep 30
     # Check if any servers died and restart them
     if [[ -f /tmp/ultrarag_mcp_pids ]]; then
-        local index=0
         while IFS=: read -r pid port name; do
             if ! kill -0 "$pid" 2>/dev/null; then
                 print_status $YELLOW "⚠️  Server $name on port $port (PID $pid) stopped unexpectedly"
                 print_status $BLUE "🔄 Restarting $name..."
-                start_server "$name" "$index"
+                start_server "$name"
             fi
-            ((index++))
         done < /tmp/ultrarag_mcp_pids
     fi
 done
