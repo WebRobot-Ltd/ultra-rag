@@ -267,10 +267,10 @@ dependencies:
   - threadpoolctl==3.6.0
   - tiktoken==0.11.0
   - tokenizers==0.21.4
-  - pytorch-cpu
-  - torchvision-cpu
-  - torchaudio-cpu
-  - cpuonly
+  - pytorch::pytorch
+  - pytorch::torchvision
+  - pytorch::torchaudio
+  - pytorch::cpuonly
   - tqdm==4.67.1
   - transformers==4.55.0
   - typer==0.16.0
