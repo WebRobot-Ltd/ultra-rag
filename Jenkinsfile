@@ -155,18 +155,11 @@ kind: Pod
 spec:
   containers:
   - name: kubectl
-    image: bitnami/kubectl:1.28
+    image: bitnami/kubectl:latest
     command:
     - sleep
     args:
     - 99d
-    resources:
-      requests:
-        memory: "256Mi"
-        cpu: "100m"
-      limits:
-        memory: "512Mi"
-        cpu: "500m"
 """
                 }
             }
