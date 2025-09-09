@@ -155,7 +155,7 @@ kind: Pod
 spec:
   containers:
   - name: kubectl
-    image: bitnami/kubectl:latest
+    image: alpine/k8s:1.28.2
     command:
     - sleep
     args:
