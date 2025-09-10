@@ -107,8 +107,10 @@ RUN mkdir -p /var/log/supervisor
 # Create supervisor socket directory
 RUN mkdir -p /var/run
 
-# Change ownership of ultrarag directory only
-RUN chown -R ultrarag:ultrarag /ultrarag
+# Change ownership of directories before switching user
+RUN chown -R ultrarag:ultrarag /ultrarag && \
+    chown -R ultrarag:ultrarag /var/log/supervisor && \
+    chown -R ultrarag:ultrarag /var/run
 
 # Switch to ultrarag user
 USER ultrarag
