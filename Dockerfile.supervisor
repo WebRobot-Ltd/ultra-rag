@@ -112,6 +112,10 @@ RUN chown -R ultrarag:ultrarag /ultrarag && \
     chown -R ultrarag:ultrarag /var/log/supervisor && \
     chown -R ultrarag:ultrarag /var/run/supervisor
 
+# Ensure supervisor directories exist and are writable
+RUN mkdir -p /var/run/supervisor && \
+    chmod 755 /var/run/supervisor
+
 # Switch to ultrarag user
 USER ultrarag
 
