@@ -23,11 +23,15 @@ RUN apt-get update && \
         netcat \
         build-essential \
         supervisor \
+        sudo \
     && update-ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
 # Create ultrarag user
 RUN groupadd -r ultrarag && useradd -r -g ultrarag ultrarag
+
+# Give ultrarag user sudo permissions
+RUN echo 'ultrarag ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
 
 # Set working directory
 WORKDIR /ultrarag
@@ -132,8 +136,9 @@ ENV MCP_PORT=8000
 
 # Create startup script
 RUN echo '#!/bin/bash' > /ultrarag/start.sh && \
-    echo 'mkdir -p /var/run/supervisor' >> /ultrarag/start.sh && \
-    echo 'chmod 755 /var/run/supervisor' >> /ultrarag/start.sh && \
+    echo 'sudo mkdir -p /var/run/supervisor' >> /ultrarag/start.sh && \
+    echo 'sudo chmod 755 /var/run/supervisor' >> /ultrarag/start.sh && \
+    echo 'sudo chown ultrarag:ultrarag /var/run/supervisor' >> /ultrarag/start.sh && \
     echo 'exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf' >> /ultrarag/start.sh && \
     chmod +x /ultrarag/start.sh
 
