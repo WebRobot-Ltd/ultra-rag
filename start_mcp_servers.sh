@@ -172,11 +172,20 @@ trap cleanup SIGINT SIGTERM
 # Start health check server first
 start_health_server
 
-# DEBUG MODE: Skip automatic server startup
-print_status $YELLOW "🔧 DEBUG MODE: Skipping automatic server startup"
-print_status $BLUE "📝 To start servers manually, run:"
-print_status $BLUE "   python servers/retriever/src/retriever.py --transport http --port 8002"
-print_status $BLUE "   or use: start_server retriever"
+# Start retriever server directly
+print_status $YELLOW "🚀 Starting retriever server directly..."
+print_status $BLUE "📝 Launching: python servers/retriever/src/retriever.py --transport http --port 8002"
+
+# Start retriever server directly in background
+cd "$SCRIPT_DIR"
+python servers/retriever/src/retriever.py --transport http --port 8002 > /tmp/ultrarag_retriever_direct.log 2>&1 &
+RETRIEVER_PID=$!
+
+# Store PID for monitoring
+echo "$RETRIEVER_PID:8002:retriever:/tmp/ultrarag_retriever_direct.log" > /tmp/ultrarag_mcp_pids
+
+print_status $GREEN "✅ Retriever server started with PID $RETRIEVER_PID on port 8002"
+print_status $BLUE "📝 Logs available at: /tmp/ultrarag_retriever_direct.log"
 
 # Keep container running and monitor servers
 print_status $YELLOW "👀 Container running in debug mode... (Press Ctrl+C to stop)"
