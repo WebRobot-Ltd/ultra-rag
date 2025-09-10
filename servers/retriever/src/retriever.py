@@ -22,14 +22,7 @@ retriever_app = Flask(__name__)
 
 class Retriever:
     def __init__(self, mcp_inst: UltraRAG_MCP_Server):
-        mcp_inst.tool(
-            self.retriever_init,
-            output="retriever_path,corpus_path,index_path,faiss_use_gpu,infinity_kwargs,cuda_devices,is_multimodal->None",
-        )
-        mcp_inst.tool(
-            self.retriever_init_openai,
-            output="corpus_path,openai_model,api_base,api_key,faiss_use_gpu,index_path,cuda_devices->None",
-        )
+        # Core embedding functions (always available)
         mcp_inst.tool(
             self.retriever_embed,
             output="embedding_path,overwrite,is_multimodal->None",
@@ -38,14 +31,8 @@ class Retriever:
             self.retriever_embed_openai,
             output="embedding_path,overwrite->None",
         )
-        mcp_inst.tool(
-            self.retriever_index,
-            output="embedding_path,index_path,overwrite,index_chunk_size->None",
-        )
-        mcp_inst.tool(
-            self.retriever_index_lancedb,
-            output="embedding_path,lancedb_path,table_name,overwrite->None",
-        )
+        
+        # Milvus functions (primary database)
         mcp_inst.tool(
             self.retriever_init_milvus,
             output="retriever_path,corpus_path,collection_name,host,port,infinity_kwargs,cuda_devices,is_multimodal->None",
@@ -55,29 +42,11 @@ class Retriever:
             output="embedding_path,collection_name,host,port,overwrite->None",
         )
         mcp_inst.tool(
-            self.retriever_search,
-            output="q_ls,top_k,query_instruction,use_openai->ret_psg",
-        )
-        mcp_inst.tool(
-            self.retriever_search_maxsim,
-            output="q_ls,embedding_path,top_k,query_instruction->ret_psg",
-        )
-        mcp_inst.tool(
-            self.retriever_search_lancedb,
-            output="q_ls,top_k,query_instruction,use_openai,lancedb_path,table_name,filter_expr->ret_psg",
-        )
-        mcp_inst.tool(
             self.retriever_search_milvus,
             output="q_ls,top_k,query_instruction,use_openai,collection_name,host,port->ret_psg",
         )
-        mcp_inst.tool(
-            self.retriever_deploy_service,
-            output="retriever_url->None",
-        )
-        mcp_inst.tool(
-            self.retriever_deploy_search,
-            output="retriever_url,q_ls,top_k,query_instruction->ret_psg",
-        )
+        
+        # Web search functions (always available)
         mcp_inst.tool(
             self.retriever_exa_search,
             output="q_ls,top_k->ret_psg",
@@ -86,8 +55,49 @@ class Retriever:
             self.retriever_tavily_search,
             output="q_ls,top_k->ret_psg",
         )
+        
+        # FAISS functions (optional - loaded on demand)
+        mcp_inst.tool(
+            self.retriever_init_faiss,
+            output="retriever_path,corpus_path,index_path,faiss_use_gpu,infinity_kwargs,cuda_devices,is_multimodal->None",
+        )
+        mcp_inst.tool(
+            self.retriever_init_openai_faiss,
+            output="corpus_path,openai_model,api_base,api_key,faiss_use_gpu,index_path,cuda_devices->None",
+        )
+        mcp_inst.tool(
+            self.retriever_index_faiss,
+            output="embedding_path,index_path,overwrite,index_chunk_size->None",
+        )
+        mcp_inst.tool(
+            self.retriever_search_faiss,
+            output="q_ls,top_k,query_instruction,use_openai->ret_psg",
+        )
+        mcp_inst.tool(
+            self.retriever_search_maxsim,
+            output="q_ls,embedding_path,top_k,query_instruction->ret_psg",
+        )
+        
+        # LanceDB functions (optional)
+        mcp_inst.tool(
+            self.retriever_index_lancedb,
+            output="embedding_path,lancedb_path,table_name,overwrite->None",
+        )
+        mcp_inst.tool(
+            self.retriever_search_lancedb,
+            output="q_ls,top_k,query_instruction,use_openai,lancedb_path,table_name,filter_expr->ret_psg",
+        )
+        # Deployment functions
+        mcp_inst.tool(
+            self.retriever_deploy_service,
+            output="retriever_url->None",
+        )
+        mcp_inst.tool(
+            self.retriever_deploy_search,
+            output="retriever_url,q_ls,top_k,query_instruction->ret_psg",
+        )
 
-    def retriever_init(
+    def retriever_init_faiss(
         self,
         retriever_path: str,
         corpus_path: str,
@@ -169,7 +179,7 @@ class Retriever:
             self.faiss_index = None
             app.logger.info(f"Retriever initialized")
 
-    def retriever_init_openai(
+    def retriever_init_openai_faiss(
         self,
         corpus_path: str,
         openai_model: str,
@@ -324,7 +334,7 @@ class Retriever:
         np.save(embedding_path, embeddings)
         app.logger.info("embedding success")
 
-    def retriever_index(
+    def retriever_index_faiss(
         self,
         embedding_path: str,
         index_path: Optional[str] = None,
@@ -687,7 +697,7 @@ class Retriever:
         app.logger.debug(f"ret_psg: {rets}")
         return {"ret_psg": rets}
 
-    async def retriever_search(
+    async def retriever_search_faiss(
         self,
         query_list: List[str],
         top_k: int = 5,
