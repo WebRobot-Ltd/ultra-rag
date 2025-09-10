@@ -132,14 +132,9 @@ spec:
                     script {
                         echo "🐳 Build Docker image UltraRAG con Kaniko..."
                         sh """
-                            # Choose Dockerfile based on build type
-                            if [ "${params.BUILD_TYPE}" = "supervisor" ]; then
-                                DOCKERFILE="Dockerfile.supervisor"
-                                echo "🐳 Using Supervisor Dockerfile for process management"
-                            else
-                                DOCKERFILE="Dockerfile.mcp-servers"
-                                echo "🐳 Using standard MCP servers Dockerfile"
-                            fi
+                            # Use Supervisor Dockerfile for all builds
+                            DOCKERFILE="Dockerfile.supervisor"
+                            echo "🐳 Using Supervisor Dockerfile for robust process management"
                             
                             /kaniko/executor --context=\$(pwd) \\
                                 --dockerfile=\$DOCKERFILE \\
