@@ -102,14 +102,12 @@ RUN chmod +x /ultrarag/health_server.py
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Create supervisor log directory
-RUN mkdir -p /var/log/supervisor && \
-    chown -R ultrarag:ultrarag /var/log/supervisor
+RUN mkdir -p /var/log/supervisor
 
 # Create supervisor socket directory
-RUN mkdir -p /var/run && \
-    chown -R ultrarag:ultrarag /var/run
+RUN mkdir -p /var/run
 
-# Change ownership of ultrarag directory
+# Change ownership of ultrarag directory only
 RUN chown -R ultrarag:ultrarag /ultrarag
 
 # Switch to ultrarag user
