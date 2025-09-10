@@ -104,13 +104,13 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 # Create supervisor log directory
 RUN mkdir -p /var/log/supervisor
 
-# Create supervisor socket directory
-RUN mkdir -p /var/run
+# Create supervisor socket directory (specific subdirectory)
+RUN mkdir -p /var/run/supervisor
 
 # Change ownership of directories before switching user
 RUN chown -R ultrarag:ultrarag /ultrarag && \
     chown -R ultrarag:ultrarag /var/log/supervisor && \
-    chown -R ultrarag:ultrarag /var/run
+    chown -R ultrarag:ultrarag /var/run/supervisor
 
 # Switch to ultrarag user
 USER ultrarag
