@@ -29,3 +29,4 @@ pymilvus>=2.3.0  # for Milvus vector database
 tavily-python>=0.1.0  # for search
 exa-py>=1.0.0  # for search
 rouge-score>=0.1.2  # for evaluation metrics
+tabulate>=0.9.0  # for table formatting
