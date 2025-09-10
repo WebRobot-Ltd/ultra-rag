@@ -90,13 +90,28 @@ start_server() {
     
     # Start server in background with proper Python path and HTTP transport
     cd "$SCRIPT_DIR"
-    python "$server_path" --transport http --port $port &
+    
+    # Create log file for this server
+    local log_file="/tmp/ultrarag_${server_name}_$(date +%s).log"
+    
+    # Start server with error logging
+    python "$server_path" --transport http --port $port > "$log_file" 2>&1 &
     local pid=$!
     
-    # Store PID and port for cleanup and health checks
-    echo "$pid:$port:$server_name" >> /tmp/ultrarag_mcp_pids
+    # Store PID, port, and log file for cleanup and health checks
+    echo "$pid:$port:$server_name:$log_file" >> /tmp/ultrarag_mcp_pids
     
-    print_status $GREEN "✅ Server $server_name started with PID $pid on port $port"
+    # Wait a moment and check if the process is still running
+    sleep 2
+    if kill -0 "$pid" 2>/dev/null; then
+        print_status $GREEN "✅ Server $server_name started with PID $pid on port $port"
+        print_status $BLUE "📝 Logs available at: $log_file"
+    else
+        print_status $RED "❌ Server $server_name failed to start (PID $pid)"
+        print_status $YELLOW "📋 Last few lines of log:"
+        tail -10 "$log_file" 2>/dev/null || print_status $RED "❌ Could not read log file"
+        return 1
+    fi
     
     # Add sleep after each server to prevent container from exiting too quickly
     print_status $BLUE "⏳ Waiting 5 seconds after starting $server_name..."
@@ -227,15 +242,29 @@ if [[ -f /tmp/ultrarag_mcp_pids ]]; then
     done < /tmp/ultrarag_mcp_pids
 fi
 
+# Enhanced monitoring loop with crash detection and logging
+print_status $YELLOW "🔄 Starting enhanced monitoring loop with crash detection..."
+print_status $BLUE "📝 Monitoring MCP servers every 10 seconds for crashes..."
+
+iteration=0
 while true; do
-    print_status $BLUE "🔄 Monitoring loop iteration $(date)"
-    sleep 30
+    iteration=$((iteration + 1))
+    print_status $BLUE "🔄 Monitoring iteration #$iteration - $(date)"
     
     # Check if health server is still running
     if [[ -f /tmp/health_server_pid ]]; then
         HEALTH_PID=$(cat /tmp/health_server_pid)
         if ! kill -0 "$HEALTH_PID" 2>/dev/null; then
-            print_status $RED "❌ Health server died! Restarting..."
+            print_status $RED "💥 Health server crashed! (PID $HEALTH_PID)"
+            print_status $YELLOW "📋 Checking system logs for crash details..."
+            
+            # Try to get crash logs
+            if command -v dmesg >/dev/null 2>&1; then
+                print_status $BLUE "📄 Recent kernel messages:"
+                dmesg | tail -10 2>/dev/null || true
+            fi
+            
+            print_status $BLUE "🔄 Restarting health server..."
             # Kill any process using port 8000 before restarting
             if lsof -ti:8000 >/dev/null 2>&1; then
                 print_status $YELLOW "🔄 Killing processes using port 8000..."
@@ -244,20 +273,71 @@ while true; do
             fi
             start_health_server
         else
-            print_status $GREEN "✅ Health server still running (PID $HEALTH_PID)"
+            # Test health endpoint
+            if ! curl -s -f "http://localhost:8000/health" >/dev/null 2>&1; then
+                print_status $YELLOW "⚠️  Health server not responding on endpoint (PID $HEALTH_PID)"
+            fi
         fi
+    else
+        print_status $RED "❌ Health server PID file not found! Restarting..."
+        start_health_server
     fi
     
-    # Check if any servers died and restart them
+    # Check MCP servers with enhanced crash detection
     if [[ -f /tmp/ultrarag_mcp_pids ]]; then
-        while IFS=: read -r pid port name; do
+        while IFS=: read -r pid port name log_file; do
             if ! kill -0 "$pid" 2>/dev/null; then
-                print_status $YELLOW "⚠️  Server $name on port $port (PID $pid) stopped unexpectedly"
+                print_status $RED "💥 MCP Server $name crashed! (PID $pid, Port $port)"
+                print_status $YELLOW "📋 Crash analysis for $name:"
+                
+                # Show crash logs if available
+                if [[ -f "$log_file" ]]; then
+                    print_status $BLUE "📄 Last 20 lines of $name log:"
+                    tail -20 "$log_file" 2>/dev/null || true
+                fi
+                
+                # Check if it's a Python process crash
+                if command -v ps >/dev/null 2>&1; then
+                    print_status $BLUE "📄 Recent Python processes:"
+                    ps aux | grep python | grep -v grep | tail -5 || true
+                fi
+                
+                # Check system resources
+                print_status $BLUE "📊 System resources:"
+                if command -v free >/dev/null 2>&1; then
+                    free -h || true
+                fi
+                if command -v df >/dev/null 2>&1; then
+                    df -h /tmp /ultrarag 2>/dev/null || true
+                fi
+                
                 print_status $BLUE "🔄 Restarting $name..."
                 start_server "$name"
             else
-                print_status $GREEN "✅ Server $name still running (PID $pid)"
+                # Server is running, test if it's responding
+                if [[ "$name" == "retriever" ]]; then
+                    if ! curl -s -f "http://localhost:$port/mcp" >/dev/null 2>&1; then
+                        print_status $YELLOW "⚠️  Server $name not responding on MCP endpoint (PID $pid, Port $port)"
+                        # Show recent logs for debugging
+                        if [[ -f "$log_file" ]]; then
+                            print_status $BLUE "📄 Recent $name logs:"
+                            tail -10 "$log_file" 2>/dev/null || true
+                        fi
+                    fi
+                fi
             fi
         done < /tmp/ultrarag_mcp_pids
+    else
+        print_status $RED "❌ MCP servers PID file not found! Restarting all servers..."
+        start_all_servers
     fi
+    
+    # Show status every 60 seconds
+    if (( iteration % 6 == 0 )); then
+        print_status $GREEN "🟢 UltraRAG MCP Servers Status - Iteration #$iteration"
+        print_status $BLUE "📊 Active processes:"
+        ps aux | grep -E "(python|ultrarag)" | grep -v grep || true
+    fi
+    
+    sleep 10  # Check every 10 seconds
 done
