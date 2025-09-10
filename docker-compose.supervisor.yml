@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  ultrarag-supervisor:
+    build:
+      context: .
+      dockerfile: Dockerfile.supervisor
+    container_name: ultrarag-supervisor
+    ports:
+      - "8000:8000"  # health check
+      - "8001:8001"  # sayhello
+      - "8002:8002"  # retriever
+      - "8003:8003"  # generation
+      - "8004:8004"  # corpus
+      - "8005:8005"  # reranker
+      - "8006:8006"  # evaluation
+      - "8007:8007"  # benchmark
+      - "8008:8008"  # custom
+      - "8009:8009"  # prompt
+      - "8010:8010"  # router
+    environment:
+      - MCP_TRANSPORT=http
+      - MCP_PORT=8000
+      - HEALTH_PORT=8000
+    volumes:
+      - ./logs:/var/log/supervisor
+    networks:
+      - ultrarag-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+
+networks:
+  ultrarag-network:
+    driver: bridge

@@ -1,0 +1,132 @@
+FROM ubuntu:22.04
+
+# Set labels
+LABEL maintainer="WebRobot Ltd"
+LABEL description="UltraRAG v2.0 - Advanced RAG Framework with MCP Support (Supervisor)"
+LABEL version="2.0-supervisor"
+
+# Set environment variables
+ENV PATH="/opt/miniconda/bin:$PATH"
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV DEBIAN_FRONTEND=noninteractive
+ENV CUDA_VISIBLE_DEVICES=""
+
+# Install system dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        bzip2 \
+        ca-certificates \
+        curl \
+        git \
+        wget \
+        netcat \
+        build-essential \
+        supervisor \
+    && update-ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create ultrarag user
+RUN groupadd -r ultrarag && useradd -r -g ultrarag ultrarag
+
+# Set working directory
+WORKDIR /ultrarag
+
+# Set working directory for miniconda
+WORKDIR /opt
+
+# Download and install Miniconda
+ADD https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh /opt/miniconda.sh
+RUN chmod +x /opt/miniconda.sh && \
+    /opt/miniconda.sh -b -p /opt/miniconda && \
+    rm -f /opt/miniconda.sh
+
+# Accept conda terms
+RUN conda --version && \
+    conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main && \
+    conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+
+# Set working directory back to ultrarag
+WORKDIR /ultrarag
+
+# Copy project files
+COPY . .
+
+# Create ultra-minimal conda environment
+RUN conda env create -f environment-ultra-minimal.yml
+
+# Activate environment and install PyTorch CPU-only via pip
+RUN /opt/miniconda/envs/ultrarag/bin/pip install --no-cache-dir \
+    torch==2.1.0+cpu \
+    torchvision==0.16.0+cpu \
+    torchaudio==2.1.0+cpu \
+    -f https://download.pytorch.org/whl/torch_stable.html
+
+# Install additional dependencies via pip
+RUN /opt/miniconda/envs/ultrarag/bin/pip install --no-cache-dir \
+    -r requirements.txt
+
+# Create health check server script
+RUN cat > /ultrarag/health_server.py << 'EOF'
+#!/usr/bin/env python3
+import http.server
+import socketserver
+import json
+import os
+
+class HealthHandler(http.server.BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == '/health':
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            response = {
+                "status": "healthy",
+                "service": "ultrarag-mcp-servers",
+                "version": "2.0-supervisor"
+            }
+            self.wfile.write(json.dumps(response).encode())
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+if __name__ == "__main__":
+    PORT = int(os.environ.get('HEALTH_PORT', 8000))
+    with socketserver.TCPServer(("", PORT), HealthHandler) as httpd:
+        print(f"Health check server running on port {PORT}")
+        httpd.serve_forever()
+EOF
+
+# Make health server executable
+RUN chmod +x /ultrarag/health_server.py
+
+# Copy supervisor configuration
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Create supervisor log directory
+RUN mkdir -p /var/log/supervisor && \
+    chown -R ultrarag:ultrarag /var/log/supervisor
+
+# Create supervisor socket directory
+RUN mkdir -p /var/run && \
+    chown -R ultrarag:ultrarag /var/run
+
+# Change ownership of ultrarag directory
+RUN chown -R ultrarag:ultrarag /ultrarag
+
+# Switch to ultrarag user
+USER ultrarag
+
+# Expose ports for MCP servers
+EXPOSE 8000 8001 8002 8003 8004 8005 8006 8007 8008 8009 8010
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Set MCP transport and ports
+ENV MCP_TRANSPORT=http
+ENV MCP_PORT=8000
+
+# Start supervisor
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

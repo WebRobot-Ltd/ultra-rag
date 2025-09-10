@@ -16,8 +16,8 @@ pipeline {
     parameters {
         choice(
             name: 'BUILD_TYPE',
-            choices: ['dev', 'staging', 'production'],
-            description: 'Tipo di build da eseguire'
+            choices: ['dev', 'staging', 'production', 'supervisor'],
+            description: 'Tipo di build da eseguire (supervisor = Supervisor process management)'
         )
         booleanParam(
             name: 'REDEPLOY_ONLY',
@@ -81,6 +81,7 @@ pipeline {
                         test -f Dockerfile || (echo "Dockerfile mancante" && exit 1)
                         test -f pyproject.toml || (echo "pyproject.toml mancante" && exit 1)
                         test -d src || (echo "Directory src mancante" && exit 1)
+                        test -f supervisord.conf || (echo "supervisord.conf mancante" && exit 1)
                         echo "✅ Struttura UltraRAG valida"
                     '''
                 }
@@ -131,8 +132,17 @@ spec:
                     script {
                         echo "🐳 Build Docker image UltraRAG con Kaniko..."
                         sh """
+                            # Choose Dockerfile based on build type
+                            if [ "${params.BUILD_TYPE}" = "supervisor" ]; then
+                                DOCKERFILE="Dockerfile.supervisor"
+                                echo "🐳 Using Supervisor Dockerfile for process management"
+                            else
+                                DOCKERFILE="Dockerfile.mcp-servers"
+                                echo "🐳 Using standard MCP servers Dockerfile"
+                            fi
+                            
                             /kaniko/executor --context=\$(pwd) \\
-                                --dockerfile=Dockerfile.mcp-servers \\
+                                --dockerfile=\$DOCKERFILE \\
                                 --destination=${DOCKER_IMAGE}:${DOCKER_TAG} \\
                                 --destination=${DOCKER_IMAGE}:latest \\
                                 --build-arg BUILD_TYPE=${params.BUILD_TYPE} \\
@@ -253,6 +263,16 @@ spec:
             secretKeyRef:
               name: ultrarag-secrets
               key: ANTHROPIC_API_KEY
+        - name: EXA_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: search-apis-secret
+              key: exa-api-key
+        - name: TAVILY_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: search-apis-secret
+              key: tavily-api-key
         resources:
           requests:
             memory: "2Gi"
