@@ -130,5 +130,12 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 ENV MCP_TRANSPORT=http
 ENV MCP_PORT=8000
 
+# Create startup script
+RUN echo '#!/bin/bash' > /ultrarag/start.sh && \
+    echo 'mkdir -p /var/run/supervisor' >> /ultrarag/start.sh && \
+    echo 'chmod 755 /var/run/supervisor' >> /ultrarag/start.sh && \
+    echo 'exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf' >> /ultrarag/start.sh && \
+    chmod +x /ultrarag/start.sh
+
 # Start supervisor
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+CMD ["/ultrarag/start.sh"]
