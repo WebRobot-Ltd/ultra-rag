@@ -67,35 +67,33 @@ RUN /opt/miniconda/envs/ultrarag/bin/pip install --no-cache-dir \
     -r requirements.txt
 
 # Create health check server script
-RUN cat > /ultrarag/health_server.py << 'EOF'
-#!/usr/bin/env python3
-import http.server
-import socketserver
-import json
-import os
-
-class HealthHandler(http.server.BaseHTTPRequestHandler):
-    def do_GET(self):
-        if self.path == '/health':
-            self.send_response(200)
-            self.send_header('Content-type', 'application/json')
-            self.end_headers()
-            response = {
-                "status": "healthy",
-                "service": "ultrarag-mcp-servers",
-                "version": "2.0-supervisor"
-            }
-            self.wfile.write(json.dumps(response).encode())
-        else:
-            self.send_response(404)
-            self.end_headers()
-
-if __name__ == "__main__":
-    PORT = int(os.environ.get('HEALTH_PORT', 8000))
-    with socketserver.TCPServer(("", PORT), HealthHandler) as httpd:
-        print(f"Health check server running on port {PORT}")
-        httpd.serve_forever()
-EOF
+RUN echo '#!/usr/bin/env python3' > /ultrarag/health_server.py && \
+    echo 'import http.server' >> /ultrarag/health_server.py && \
+    echo 'import socketserver' >> /ultrarag/health_server.py && \
+    echo 'import json' >> /ultrarag/health_server.py && \
+    echo 'import os' >> /ultrarag/health_server.py && \
+    echo '' >> /ultrarag/health_server.py && \
+    echo 'class HealthHandler(http.server.BaseHTTPRequestHandler):' >> /ultrarag/health_server.py && \
+    echo '    def do_GET(self):' >> /ultrarag/health_server.py && \
+    echo '        if self.path == "/health":' >> /ultrarag/health_server.py && \
+    echo '            self.send_response(200)' >> /ultrarag/health_server.py && \
+    echo '            self.send_header("Content-type", "application/json")' >> /ultrarag/health_server.py && \
+    echo '            self.end_headers()' >> /ultrarag/health_server.py && \
+    echo '            response = {' >> /ultrarag/health_server.py && \
+    echo '                "status": "healthy",' >> /ultrarag/health_server.py && \
+    echo '                "service": "ultrarag-mcp-servers",' >> /ultrarag/health_server.py && \
+    echo '                "version": "2.0-supervisor"' >> /ultrarag/health_server.py && \
+    echo '            }' >> /ultrarag/health_server.py && \
+    echo '            self.wfile.write(json.dumps(response).encode())' >> /ultrarag/health_server.py && \
+    echo '        else:' >> /ultrarag/health_server.py && \
+    echo '            self.send_response(404)' >> /ultrarag/health_server.py && \
+    echo '            self.end_headers()' >> /ultrarag/health_server.py && \
+    echo '' >> /ultrarag/health_server.py && \
+    echo 'if __name__ == "__main__":' >> /ultrarag/health_server.py && \
+    echo '    PORT = int(os.environ.get("HEALTH_PORT", 8000))' >> /ultrarag/health_server.py && \
+    echo '    with socketserver.TCPServer(("", PORT), HealthHandler) as httpd:' >> /ultrarag/health_server.py && \
+    echo '        print(f"Health check server running on port {PORT}")' >> /ultrarag/health_server.py && \
+    echo '        httpd.serve_forever()' >> /ultrarag/health_server.py
 
 # Make health server executable
 RUN chmod +x /ultrarag/health_server.py
