@@ -43,17 +43,18 @@ with socketserver.TCPServer(('', 8000), HealthHandler) as httpd:
 
 # List of available MCP servers with their default ports
 # Port 8000 is reserved for health check server
+# For testing, only enable retriever server
 declare -A SERVERS=(
-    ["sayhello"]="8001"
     ["retriever"]="8002"
-    ["generation"]="8003"
-    ["corpus"]="8004"
-    ["reranker"]="8005"
-    ["evaluation"]="8006"
-    ["benchmark"]="8007"
-    ["custom"]="8008"
-    ["prompt"]="8009"
-    ["router"]="8010"
+    # ["sayhello"]="8001"
+    # ["generation"]="8003"
+    # ["corpus"]="8004"
+    # ["reranker"]="8005"
+    # ["evaluation"]="8006"
+    # ["benchmark"]="8007"
+    # ["custom"]="8008"
+    # ["prompt"]="8009"
+    # ["router"]="8010"
 )
 
 # Colors for output
@@ -105,7 +106,7 @@ start_server() {
 }
 
 start_all_servers() {
-    print_status $YELLOW "🎯 UltraRAG MCP Servers Launcher (Docker)"
+    print_status $YELLOW "🎯 UltraRAG MCP Servers Launcher (Docker) - RETRIEVER ONLY"
     echo "=================================================="
     
     # Clear PID file

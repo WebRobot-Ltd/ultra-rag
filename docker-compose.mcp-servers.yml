@@ -17,16 +17,8 @@ services:
       - ./logs:/app/logs
     ports:
       # Expose ports for different MCP servers if they need HTTP endpoints
-      - "8000:8000"  # sayhello
-      - "8001:8001"  # retriever
-      - "8002:8002"  # generation
-      - "8003:8003"  # corpus
-      - "8004:8004"  # reranker
-      - "8005:8005"  # evaluation
-      - "8006:8006"  # benchmark
-      - "8007:8007"  # custom
-      - "8008:8008"  # prompt
-      - "8009:8009"  # router
+      - "8000:8000"  # health check server
+      - "8002:8002"  # retriever (only for testing)
     networks:
       - ultrarag-network
     healthcheck:

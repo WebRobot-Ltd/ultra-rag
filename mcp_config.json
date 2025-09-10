@@ -1,0 +1,51 @@
+{
+  "mcpServers": {
+    "ultrarag-sayhello": {
+      "command": "python",
+      "args": ["servers/sayhello/src/sayhello.py"],
+      "description": "Simple greeting server for testing MCP connectivity"
+    },
+    "ultrarag-corpus": {
+      "command": "python", 
+      "args": ["servers/corpus/src/corpus.py"],
+      "description": "Document parsing and chunking server"
+    },
+    "ultrarag-custom": {
+      "command": "python",
+      "args": ["servers/custom/src/custom.py"],
+      "description": "Custom operations server"
+    },
+    "ultrarag-evaluation": {
+      "command": "python",
+      "args": ["servers/evaluation/src/evaluation.py"],
+      "description": "Model evaluation and metrics server"
+    },
+    "ultrarag-generation": {
+      "command": "python",
+      "args": ["servers/generation/src/generation.py"],
+      "description": "Text generation with LLM models"
+    },
+    "ultrarag-prompt": {
+      "command": "python",
+      "args": ["servers/prompt/src/prompt.py"],
+      "description": "Prompt management and templating server"
+    },
+    "ultrarag-reranker": {
+      "command": "python",
+      "args": ["servers/reranker/src/reranker.py"],
+      "description": "Document reranking server"
+    },
+    "ultrarag-retriever": {
+      "command": "python",
+      "args": ["servers/retriever/src/retriever.py"],
+      "description": "Document retrieval and embedding server"
+    },
+    "ultrarag-benchmark": {
+      "command": "python",
+      "args": ["servers/benchmark/src/benchmark.py"],
+      "description": "Performance benchmarking server"
+    }
+  },
+  "transport": "stdio",
+  "description": "UltraRAG v2.0 MCP Server Configuration - All servers available for AI agent access"
+}

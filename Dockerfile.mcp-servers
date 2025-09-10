@@ -76,8 +76,8 @@ RUN chown -R ultrarag:ultrarag /ultrarag
 # Switch to non-root user
 USER ultrarag
 
-# Expose ports for MCP servers
-EXPOSE 8000-8009
+# Expose ports for MCP servers (retriever only for testing)
+EXPOSE 8000 8002
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \

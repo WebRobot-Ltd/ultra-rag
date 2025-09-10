@@ -47,6 +47,14 @@ class Retriever:
             output="embedding_path,lancedb_path,table_name,overwrite->None",
         )
         mcp_inst.tool(
+            self.retriever_init_milvus,
+            output="retriever_path,corpus_path,collection_name,host,port,infinity_kwargs,cuda_devices,is_multimodal->None",
+        )
+        mcp_inst.tool(
+            self.retriever_index_milvus,
+            output="embedding_path,collection_name,host,port,overwrite->None",
+        )
+        mcp_inst.tool(
             self.retriever_search,
             output="q_ls,top_k,query_instruction,use_openai->ret_psg",
         )
@@ -57,6 +65,10 @@ class Retriever:
         mcp_inst.tool(
             self.retriever_search_lancedb,
             output="q_ls,top_k,query_instruction,use_openai,lancedb_path,table_name,filter_expr->ret_psg",
+        )
+        mcp_inst.tool(
+            self.retriever_search_milvus,
+            output="q_ls,top_k,query_instruction,use_openai,collection_name,host,port->ret_psg",
         )
         mcp_inst.tool(
             self.retriever_deploy_service,
@@ -450,6 +462,230 @@ class Retriever:
         db.create_table(table_name, data=df)
 
         app.logger.info("LanceDB indexing success")
+
+    def retriever_init_milvus(
+        self,
+        retriever_path: str,
+        corpus_path: str,
+        collection_name: str = "webrobot_knowledge_base",
+        host: str = "localhost",
+        port: int = 19530,
+        infinity_kwargs: Optional[Dict[str, Any]] = None,
+        cuda_devices: Optional[str] = None,
+        is_multimodal: bool = False,
+    ):
+        """Initialize Milvus retriever with infinity-emb model"""
+        try:
+            from pymilvus import connections, Collection, CollectionSchema, FieldSchema, DataType, utility
+        except ImportError:
+            err_msg = "pymilvus is not installed. Please install it with `pip install pymilvus`."
+            app.logger.error(err_msg)
+            raise ImportError(err_msg)
+
+        try:
+            from infinity_emb.log_handler import LOG_LEVELS
+            from infinity_emb import AsyncEngineArray, EngineArgs
+        except ImportError:
+            err_msg = "infinity_emb is not installed. Please install it with `pip install infinity-emb`."
+            app.logger.error(err_msg)
+            raise ImportError(err_msg)
+
+        app.logger.setLevel(LOG_LEVELS["warning"])
+
+        if cuda_devices is not None:
+            assert isinstance(cuda_devices, str), "cuda_devices should be a string"
+            os.environ["CUDA_VISIBLE_DEVICES"] = cuda_devices
+
+        infinity_kwargs = infinity_kwargs or {}
+        self.model = AsyncEngineArray.from_args(
+            [EngineArgs(model_name_or_path=retriever_path, **infinity_kwargs)]
+        )[0]
+
+        # Load corpus
+        self.contents = []
+        corpus_path_obj = Path(corpus_path)
+        corpus_dir = corpus_path_obj.parent
+        if not is_multimodal:
+            with jsonlines.open(corpus_path, mode="r") as reader:
+                self.contents = [item["contents"] for item in reader]
+        else:
+            with jsonlines.open(corpus_path, mode="r") as reader:
+                for i, item in enumerate(reader):
+                    if "image_path" not in item:
+                        raise ValueError(
+                            f"Line {i}: expected key 'image_path' in multimodal corpus JSONL, got keys={list(item.keys())}"
+                        )
+                    rel = str(item["image_path"])
+                    abs_path = str((corpus_dir / rel).resolve())
+                    self.contents.append(abs_path)
+
+        # Connect to Milvus
+        self.milvus_host = host
+        self.milvus_port = port
+        self.collection_name = collection_name
+        
+        try:
+            connections.connect("default", host=host, port=str(port))
+            app.logger.info(f"Connected to Milvus at {host}:{port}")
+        except Exception as e:
+            app.logger.error(f"Failed to connect to Milvus: {e}")
+            raise
+
+        # Store connection info for later use
+        self.milvus_connected = True
+        app.logger.info("Milvus retriever initialized")
+
+    def retriever_index_milvus(
+        self,
+        embedding_path: str,
+        collection_name: str = "webrobot_knowledge_base",
+        host: str = "localhost",
+        port: int = 19530,
+        overwrite: bool = False,
+    ):
+        """Build a Milvus collection from an embedding matrix"""
+        try:
+            from pymilvus import connections, Collection, CollectionSchema, FieldSchema, DataType, utility
+        except ImportError:
+            err_msg = "pymilvus is not installed. Please install it with `pip install pymilvus`."
+            app.logger.error(err_msg)
+            raise ImportError(err_msg)
+
+        if not os.path.exists(embedding_path):
+            app.logger.error(f"Embedding file not found: {embedding_path}")
+            raise NotFoundError(f"Embedding file not found: {embedding_path}")
+
+        # Connect to Milvus
+        try:
+            connections.connect("default", host=host, port=str(port))
+        except Exception as e:
+            app.logger.error(f"Failed to connect to Milvus: {e}")
+            raise
+
+        # Load embeddings
+        embedding = np.load(embedding_path)
+        dim = embedding.shape[1]
+        num_vectors = embedding.shape[0]
+
+        # Define collection schema
+        fields = [
+            FieldSchema(name="id", dtype=DataType.INT64, is_primary=True, auto_id=True),
+            FieldSchema(name="vector", dtype=DataType.FLOAT_VECTOR, dim=dim),
+            FieldSchema(name="text", dtype=DataType.VARCHAR, max_length=65535)
+        ]
+        schema = CollectionSchema(fields, f"Collection for {collection_name}")
+
+        # Create or get collection
+        if utility.has_collection(collection_name):
+            if overwrite:
+                utility.drop_collection(collection_name)
+                app.logger.info(f"Dropped existing collection '{collection_name}'")
+            else:
+                app.logger.info(f"Collection '{collection_name}' already exists, skipping")
+                return
+
+        collection = Collection(collection_name, schema)
+        app.logger.info(f"Created collection '{collection_name}' with dimension {dim}")
+
+        # Prepare data for insertion
+        vectors = embedding.tolist()
+        texts = self.contents[:num_vectors] if hasattr(self, 'contents') else [f"Document {i}" for i in range(num_vectors)]
+
+        # Insert data
+        data = [vectors, texts]
+        collection.insert(data)
+        collection.flush()
+        app.logger.info(f"Inserted {num_vectors} vectors into collection '{collection_name}'")
+
+        # Create index
+        index_params = {
+            "metric_type": "IP",  # Inner Product
+            "index_type": "IVF_FLAT",
+            "params": {"nlist": 1024}
+        }
+        collection.create_index("vector", index_params)
+        app.logger.info("Created vector index")
+
+        # Load collection
+        collection.load()
+        app.logger.info("Collection loaded and ready for search")
+
+        # Store collection reference
+        self.milvus_collection = collection
+        app.logger.info("Milvus indexing success")
+
+    async def retriever_search_milvus(
+        self,
+        query_list: List[str],
+        top_k: int = 5,
+        query_instruction: str = "",
+        use_openai: bool = False,
+        collection_name: str = "webrobot_knowledge_base",
+        host: str = "localhost",
+        port: int = 19530,
+    ) -> Dict[str, List[List[str]]]:
+        """Search using Milvus vector database"""
+        try:
+            from pymilvus import connections, Collection
+        except ImportError:
+            err_msg = "pymilvus is not installed. Please install it with `pip install pymilvus`."
+            app.logger.error(err_msg)
+            raise ImportError(err_msg)
+
+        if isinstance(query_list, str):
+            query_list = [query_list]
+        queries = [f"{query_instruction}{query}" for query in query_list]
+
+        # Generate query embeddings
+        if use_openai:
+            async def openai_embed(texts):
+                embeddings = []
+                for text in texts:
+                    response = await self.client.embeddings.create(
+                        input=text, model=self.openai_model
+                    )
+                    embeddings.append(response.data[0].embedding)
+                return embeddings
+
+            query_embedding = await openai_embed(queries)
+        else:
+            async with self.model:
+                query_embedding, usage = await self.model.embed(sentences=queries)
+        
+        query_embedding = np.array(query_embedding, dtype=np.float32)
+        app.logger.info("Query embedding finished")
+
+        # Connect to Milvus
+        try:
+            connections.connect("default", host=host, port=str(port))
+        except Exception as e:
+            app.logger.error(f"Failed to connect to Milvus: {e}")
+            raise
+
+        # Get collection
+        collection = Collection(collection_name)
+        collection.load()
+
+        # Search
+        search_params = {"metric_type": "IP", "params": {"nprobe": 10}}
+        results = collection.search(
+            data=query_embedding.tolist(),
+            anns_field="vector",
+            param=search_params,
+            limit=top_k,
+            output_fields=["text"]
+        )
+
+        # Process results
+        rets = []
+        for hits in results:
+            cur_ret = []
+            for hit in hits:
+                cur_ret.append(hit.entity.get("text"))
+            rets.append(cur_ret)
+
+        app.logger.debug(f"ret_psg: {rets}")
+        return {"ret_psg": rets}
 
     async def retriever_search(
         self,
