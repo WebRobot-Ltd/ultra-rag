@@ -172,15 +172,45 @@ trap cleanup SIGINT SIGTERM
 # Start health check server first
 start_health_server
 
-# Start all servers
-start_all_servers
+# DEBUG MODE: Skip automatic server startup
+print_status $YELLOW "🔧 DEBUG MODE: Skipping automatic server startup"
+print_status $BLUE "📝 To start servers manually, run:"
+print_status $BLUE "   python servers/retriever/src/retriever.py --transport http --port 8002"
+print_status $BLUE "   or use: start_server retriever"
 
 # Keep container running and monitor servers
-print_status $YELLOW "👀 Servers running... (Press Ctrl+C to stop)"
+print_status $YELLOW "👀 Container running in debug mode... (Press Ctrl+C to stop)"
 
 # Add immediate sleep to prevent container from exiting too quickly
-print_status $BLUE "⏳ Waiting 30 seconds to ensure servers are stable..."
+print_status $BLUE "⏳ Waiting 30 seconds before starting monitoring loop..."
 sleep 30
+
+# Show initial status before starting monitoring loop
+print_status $GREEN "🔍 Initial server status check:"
+if [[ -f /tmp/health_server_pid ]]; then
+    HEALTH_PID=$(cat /tmp/health_server_pid)
+    if kill -0 "$HEALTH_PID" 2>/dev/null; then
+        print_status $GREEN "✅ Health server running (PID $HEALTH_PID)"
+    else
+        print_status $RED "❌ Health server not running!"
+    fi
+fi
+
+if [[ -f /tmp/ultrarag_mcp_pids ]]; then
+    while IFS=: read -r pid port name log_file; do
+        if kill -0 "$pid" 2>/dev/null; then
+            print_status $GREEN "✅ Server $name running (PID $pid, Port $port)"
+        else
+            print_status $RED "❌ Server $name not running (PID $pid)"
+            if [[ -f "$log_file" ]]; then
+                print_status $YELLOW "📄 Last 10 lines of $name log:"
+                tail -10 "$log_file" 2>/dev/null || true
+            fi
+        fi
+    done < /tmp/ultrarag_mcp_pids
+else
+    print_status $RED "❌ No MCP servers PID file found!"
+fi
 
 # Check if servers are still running after initial sleep
 print_status $BLUE "🔍 Checking server status after initial sleep..."
