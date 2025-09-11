@@ -1,0 +1,72 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: ultrarag-mcp-auth
+  namespace: default
+spec:
+  basicAuth:
+    secret: ultrarag-mcp-auth
+    realm: "UltraRAG MCP Servers - Authentication Required"
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: ultrarag-mcp-cors
+  namespace: default
+spec:
+  headers:
+    accessControlAllowMethods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - OPTIONS
+    accessControlAllowOriginList:
+      - "*"
+    accessControlAllowHeaders:
+      - "DNT"
+      - "User-Agent"
+      - "X-Requested-With"
+      - "If-Modified-Since"
+      - "Cache-Control"
+      - "Content-Type"
+      - "Range"
+      - "Authorization"
+      - "Accept"
+    accessControlMaxAge: 100
+    addVaryHeader: true
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: ultrarag-mcp-strip-prefix
+  namespace: default
+spec:
+  stripPrefix:
+    prefixes:
+      - "/health"
+      - "/sayhello"
+      - "/retriever"
+      - "/generation"
+      - "/corpus"
+      - "/reranker"
+      - "/evaluation"
+      - "/benchmark"
+      - "/custom"
+      - "/prompt"
+      - "/router"
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: ultrarag-mcp-chain
+  namespace: default
+spec:
+  chain:
+    middlewares:
+      - name: ultrarag-mcp-auth
+      - name: ultrarag-mcp-cors
+      - name: ultrarag-mcp-strip-prefix

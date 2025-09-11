@@ -242,6 +242,27 @@ spec:
         image: ${DOCKER_IMAGE}:${DOCKER_TAG}
         ports:
         - containerPort: 8000
+          name: health
+        - containerPort: 8001
+          name: sayhello
+        - containerPort: 8002
+          name: retriever
+        - containerPort: 8003
+          name: generation
+        - containerPort: 8004
+          name: corpus
+        - containerPort: 8005
+          name: reranker
+        - containerPort: 8006
+          name: evaluation
+        - containerPort: 8007
+          name: benchmark
+        - containerPort: 8008
+          name: custom
+        - containerPort: 8009
+          name: prompt
+        - containerPort: 8010
+          name: router
         env:
         - name: MILVUS_HOST
           valueFrom:
@@ -289,7 +310,371 @@ spec:
           periodSeconds: 30
 EOF
                             
-                            echo "✅ Deploy Kubernetes completato"
+                            # Deploy MCP Service
+                            cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Service
+metadata:
+  name: ultrarag-mcp-service
+  namespace: ${K8S_NAMESPACE}
+  labels:
+    app: ultrarag
+spec:
+  type: ClusterIP
+  ports:
+  - name: health
+    port: 8000
+    targetPort: 8000
+    protocol: TCP
+  - name: sayhello
+    port: 8001
+    targetPort: 8001
+    protocol: TCP
+  - name: retriever
+    port: 8002
+    targetPort: 8002
+    protocol: TCP
+  - name: generation
+    port: 8003
+    targetPort: 8003
+    protocol: TCP
+  - name: corpus
+    port: 8004
+    targetPort: 8004
+    protocol: TCP
+  - name: reranker
+    port: 8005
+    targetPort: 8005
+    protocol: TCP
+  - name: evaluation
+    port: 8006
+    targetPort: 8006
+    protocol: TCP
+  - name: benchmark
+    port: 8007
+    targetPort: 8007
+    protocol: TCP
+  - name: custom
+    port: 8008
+    targetPort: 8008
+    protocol: TCP
+  - name: prompt
+    port: 8009
+    targetPort: 8009
+    protocol: TCP
+  - name: router
+    port: 8010
+    targetPort: 8010
+    protocol: TCP
+  selector:
+    app: ultrarag
+EOF
+                            
+                            # Verify MCP Authentication Secret exists
+                            if ! kubectl get secret ultrarag-mcp-auth -n ${K8S_NAMESPACE} &>/dev/null; then
+                                echo "⚠️  MCP authentication secret not found. Creating it..."
+                                kubectl create secret generic ultrarag-mcp-auth \
+                                    --from-literal=username=admin \
+                                    --from-literal=password=UltraRAG2025Secure \
+                                    --from-literal=api-key=UltraRAG-MCP-API-Key-2025 \
+                                    --from-literal=jwt-secret=UltraRAG-JWT-Secret-2025 \
+                                    --namespace=${K8S_NAMESPACE}
+                                echo "✅ MCP authentication secret created"
+                            else
+                                echo "✅ MCP authentication secret already exists"
+                            fi
+                            
+                            # Verify Search APIs Secret exists
+                            if ! kubectl get secret search-apis-secret -n ${K8S_NAMESPACE} &>/dev/null; then
+                                echo "⚠️  Search APIs secret not found. Creating placeholder..."
+                                kubectl create secret generic search-apis-secret \
+                                    --from-literal=exa-api-key=placeholder-exa-key \
+                                    --from-literal=tavily-api-key=placeholder-tavily-key \
+                                    --namespace=${K8S_NAMESPACE}
+                                echo "✅ Search APIs secret created (please update with real keys)"
+                            else
+                                echo "✅ Search APIs secret already exists"
+                            fi
+                            
+                            # Deploy Traefik Middleware for Basic Auth
+                            cat <<EOF | kubectl apply -f -
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: ultrarag-mcp-auth
+  namespace: ${K8S_NAMESPACE}
+spec:
+  basicAuth:
+    secret: ultrarag-mcp-auth
+    realm: "UltraRAG MCP Servers - Authentication Required"
+EOF
+                            
+                            # Deploy Traefik Middleware for CORS
+                            cat <<EOF | kubectl apply -f -
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: ultrarag-mcp-cors
+  namespace: ${K8S_NAMESPACE}
+spec:
+  headers:
+    accessControlAllowMethods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - OPTIONS
+    accessControlAllowOriginList:
+      - "*"
+    accessControlAllowHeaders:
+      - "DNT"
+      - "User-Agent"
+      - "X-Requested-With"
+      - "If-Modified-Since"
+      - "Cache-Control"
+      - "Content-Type"
+      - "Range"
+      - "Authorization"
+      - "Accept"
+    accessControlMaxAge: 100
+    addVaryHeader: true
+EOF
+                            
+                            # Deploy Traefik Middleware for Strip Prefix
+                            cat <<EOF | kubectl apply -f -
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: ultrarag-mcp-strip-prefix
+  namespace: ${K8S_NAMESPACE}
+spec:
+  stripPrefix:
+    prefixes:
+      - "/health"
+      - "/sayhello"
+      - "/retriever"
+      - "/generation"
+      - "/corpus"
+      - "/reranker"
+      - "/evaluation"
+      - "/benchmark"
+      - "/custom"
+      - "/prompt"
+      - "/router"
+EOF
+                            
+                            # Deploy Traefik Middleware Chain
+                            cat <<EOF | kubectl apply -f -
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: ultrarag-mcp-chain
+  namespace: ${K8S_NAMESPACE}
+spec:
+  chain:
+    middlewares:
+      - name: ultrarag-mcp-auth
+      - name: ultrarag-mcp-cors
+      - name: ultrarag-mcp-strip-prefix
+EOF
+                            
+                            # Deploy Traefik Ingress for MCP servers with authentication
+                            cat <<EOF | kubectl apply -f -
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ultrarag-mcp-auth-ingress
+  namespace: ${K8S_NAMESPACE}
+  annotations:
+    kubernetes.io/ingress.class: "traefik"
+    traefik.ingress.kubernetes.io/transport.respondingTimeouts.idleTimeout: "600"
+    traefik.ingress.kubernetes.io/transport.respondingTimeouts.readTimeout: "600"
+    traefik.ingress.kubernetes.io/transport.respondingTimeouts.writeTimeout: "600"
+    traefik.ingress.kubernetes.io/custom-request-headers: "X-Forwarded-Proto:%[req.scheme]"
+    traefik.ingress.kubernetes.io/router.middlewares: ${K8S_NAMESPACE}-ultrarag-mcp-chain@kubernetescrd
+spec:
+  rules:
+  - host: ultrarag-mcp.webrobot.eu
+    http:
+      paths:
+      - path: /health
+        pathType: Prefix
+        backend:
+          service:
+            name: ultrarag-mcp-service
+            port:
+              number: 8000
+      - path: /sayhello
+        pathType: Prefix
+        backend:
+          service:
+            name: ultrarag-mcp-service
+            port:
+              number: 8001
+      - path: /retriever
+        pathType: Prefix
+        backend:
+          service:
+            name: ultrarag-mcp-service
+            port:
+              number: 8002
+      - path: /generation
+        pathType: Prefix
+        backend:
+          service:
+            name: ultrarag-mcp-service
+            port:
+              number: 8003
+      - path: /corpus
+        pathType: Prefix
+        backend:
+          service:
+            name: ultrarag-mcp-service
+            port:
+              number: 8004
+      - path: /reranker
+        pathType: Prefix
+        backend:
+          service:
+            name: ultrarag-mcp-service
+            port:
+              number: 8005
+      - path: /evaluation
+        pathType: Prefix
+        backend:
+          service:
+            name: ultrarag-mcp-service
+            port:
+              number: 8006
+      - path: /benchmark
+        pathType: Prefix
+        backend:
+          service:
+            name: ultrarag-mcp-service
+            port:
+              number: 8007
+      - path: /custom
+        pathType: Prefix
+        backend:
+          service:
+            name: ultrarag-mcp-service
+            port:
+              number: 8008
+      - path: /prompt
+        pathType: Prefix
+        backend:
+          service:
+            name: ultrarag-mcp-service
+            port:
+              number: 8009
+      - path: /router
+        pathType: Prefix
+        backend:
+          service:
+            name: ultrarag-mcp-service
+            port:
+              number: 8010
+EOF
+                            
+                            # Deploy Traefik Ingress for MCP servers without authentication (dev/test)
+                            cat <<EOF | kubectl apply -f -
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ultrarag-mcp-no-auth-ingress
+  namespace: ${K8S_NAMESPACE}
+  annotations:
+    kubernetes.io/ingress.class: "traefik"
+    traefik.ingress.kubernetes.io/transport.respondingTimeouts.idleTimeout: "600"
+    traefik.ingress.kubernetes.io/transport.respondingTimeouts.readTimeout: "600"
+    traefik.ingress.kubernetes.io/transport.respondingTimeouts.writeTimeout: "600"
+    traefik.ingress.kubernetes.io/custom-request-headers: "X-Forwarded-Proto:%[req.scheme]"
+    traefik.ingress.kubernetes.io/router.middlewares: ${K8S_NAMESPACE}-ultrarag-mcp-cors@kubernetescrd
+spec:
+  rules:
+  - host: ultrarag-mcp-dev.webrobot.eu
+    http:
+      paths:
+      - path: /health
+        pathType: Prefix
+        backend:
+          service:
+            name: ultrarag-mcp-service
+            port:
+              number: 8000
+      - path: /sayhello
+        pathType: Prefix
+        backend:
+          service:
+            name: ultrarag-mcp-service
+            port:
+              number: 8001
+      - path: /retriever
+        pathType: Prefix
+        backend:
+          service:
+            name: ultrarag-mcp-service
+            port:
+              number: 8002
+      - path: /generation
+        pathType: Prefix
+        backend:
+          service:
+            name: ultrarag-mcp-service
+            port:
+              number: 8003
+      - path: /corpus
+        pathType: Prefix
+        backend:
+          service:
+            name: ultrarag-mcp-service
+            port:
+              number: 8004
+      - path: /reranker
+        pathType: Prefix
+        backend:
+          service:
+            name: ultrarag-mcp-service
+            port:
+              number: 8005
+      - path: /evaluation
+        pathType: Prefix
+        backend:
+          service:
+            name: ultrarag-mcp-service
+            port:
+              number: 8006
+      - path: /benchmark
+        pathType: Prefix
+        backend:
+          service:
+            name: ultrarag-mcp-service
+            port:
+              number: 8007
+      - path: /custom
+        pathType: Prefix
+        backend:
+          service:
+            name: ultrarag-mcp-service
+            port:
+              number: 8008
+      - path: /prompt
+        pathType: Prefix
+        backend:
+          service:
+            name: ultrarag-mcp-service
+            port:
+              number: 8009
+      - path: /router
+        pathType: Prefix
+        backend:
+          service:
+            name: ultrarag-mcp-service
+            port:
+              number: 8010
+EOF
+                            
+                            echo "✅ Deploy Kubernetes completato con Ingress Traefik"
                         '''
                     }
                 }
@@ -314,6 +699,18 @@ EOF
             script {
                 echo "✅ Pipeline UltraRAG completata con successo!"
                 echo "🌐 UltraRAG disponibile su: ultrarag-service.${K8S_NAMESPACE}.svc.cluster.local:8000"
+                echo ""
+                echo "🔗 MCP Servers URLs:"
+                echo "   📊 Produzione (con autenticazione): https://ultrarag-mcp.webrobot.eu"
+                echo "   🛠️ Sviluppo (senza autenticazione): https://ultrarag-mcp-dev.webrobot.eu"
+                echo ""
+                echo "🔐 Credenziali di accesso:"
+                echo "   Username: admin"
+                echo "   Password: UltraRAG2025Secure"
+                echo ""
+                echo "📋 Endpoints disponibili:"
+                echo "   /health, /sayhello, /retriever, /generation, /corpus, /reranker"
+                echo "   /evaluation, /benchmark, /custom, /prompt, /router"
             }
         }
     }

@@ -1,0 +1,96 @@
+# Secret is defined in k8s-mcp-secret.yaml
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ultrarag-mcp-auth-ingress
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: "traefik"
+    traefik.ingress.kubernetes.io/transport.respondingTimeouts.idleTimeout: "600"
+    traefik.ingress.kubernetes.io/transport.respondingTimeouts.readTimeout: "600"
+    traefik.ingress.kubernetes.io/transport.respondingTimeouts.writeTimeout: "600"
+    traefik.ingress.kubernetes.io/custom-request-headers: "X-Forwarded-Proto:%[req.scheme]"
+    traefik.ingress.kubernetes.io/router.middlewares: default-ultrarag-mcp-chain@kubernetescrd
+spec:
+  rules:
+  - host: ultrarag-mcp.webrobot.local
+    http:
+      paths:
+      - path: /health
+        pathType: Prefix
+        backend:
+          service:
+            name: ultrarag-mcp-service
+            port:
+              number: 8000
+      - path: /sayhello
+        pathType: Prefix
+        backend:
+          service:
+            name: ultrarag-mcp-service
+            port:
+              number: 8001
+      - path: /retriever
+        pathType: Prefix
+        backend:
+          service:
+            name: ultrarag-mcp-service
+            port:
+              number: 8002
+      - path: /generation
+        pathType: Prefix
+        backend:
+          service:
+            name: ultrarag-mcp-service
+            port:
+              number: 8003
+      - path: /corpus
+        pathType: Prefix
+        backend:
+          service:
+            name: ultrarag-mcp-service
+            port:
+              number: 8004
+      - path: /reranker
+        pathType: Prefix
+        backend:
+          service:
+            name: ultrarag-mcp-service
+            port:
+              number: 8005
+      - path: /evaluation
+        pathType: Prefix
+        backend:
+          service:
+            name: ultrarag-mcp-service
+            port:
+              number: 8006
+      - path: /benchmark
+        pathType: Prefix
+        backend:
+          service:
+            name: ultrarag-mcp-service
+            port:
+              number: 8007
+      - path: /custom
+        pathType: Prefix
+        backend:
+          service:
+            name: ultrarag-mcp-service
+            port:
+              number: 8008
+      - path: /prompt
+        pathType: Prefix
+        backend:
+          service:
+            name: ultrarag-mcp-service
+            port:
+              number: 8009
+      - path: /router
+        pathType: Prefix
+        backend:
+          service:
+            name: ultrarag-mcp-service
+            port:
+              number: 8010

@@ -31,3 +31,14 @@ servers/*/server.yaml
 
 # Python package metadata
 src/*.egg-info/
+# MCP Secrets - Do not commit
+k8s-mcp-secret.yaml
+k8s-mcp-secrets.yaml
+manage-mcp-credentials.sh
+
+# Test files
+test_document.txt
+test_mcp_client.py
+
+# Config files with sensitive data
+ultrarag-mcp-config.json
