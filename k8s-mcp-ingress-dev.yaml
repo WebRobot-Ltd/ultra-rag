@@ -1,0 +1,206 @@
+# Development MCP Servers (No Authentication)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ultrarag-mcp-retriever-dev
+  namespace: default
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: default-ultrarag-mcp-cors@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: retriever-mcp-dev.metaglobe.finance
+      http:
+        paths:
+          - path: /mcp
+            pathType: Prefix
+            backend:
+              service:
+                name: ultrarag-mcp-service
+                port:
+                  number: 8002
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ultrarag-mcp-generation-dev
+  namespace: default
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: default-ultrarag-mcp-cors@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: generation-mcp-dev.metaglobe.finance
+      http:
+        paths:
+          - path: /mcp
+            pathType: Prefix
+            backend:
+              service:
+                name: ultrarag-mcp-service
+                port:
+                  number: 8003
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ultrarag-mcp-corpus-dev
+  namespace: default
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: default-ultrarag-mcp-cors@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: corpus-mcp-dev.metaglobe.finance
+      http:
+        paths:
+          - path: /mcp
+            pathType: Prefix
+            backend:
+              service:
+                name: ultrarag-mcp-service
+                port:
+                  number: 8004
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ultrarag-mcp-reranker-dev
+  namespace: default
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: default-ultrarag-mcp-cors@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: reranker-mcp-dev.metaglobe.finance
+      http:
+        paths:
+          - path: /mcp
+            pathType: Prefix
+            backend:
+              service:
+                name: ultrarag-mcp-service
+                port:
+                  number: 8005
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ultrarag-mcp-evaluation-dev
+  namespace: default
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: default-ultrarag-mcp-cors@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: evaluation-mcp-dev.metaglobe.finance
+      http:
+        paths:
+          - path: /mcp
+            pathType: Prefix
+            backend:
+              service:
+                name: ultrarag-mcp-service
+                port:
+                  number: 8006
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ultrarag-mcp-benchmark-dev
+  namespace: default
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: default-ultrarag-mcp-cors@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: benchmark-mcp-dev.metaglobe.finance
+      http:
+        paths:
+          - path: /mcp
+            pathType: Prefix
+            backend:
+              service:
+                name: ultrarag-mcp-service
+                port:
+                  number: 8007
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ultrarag-mcp-custom-dev
+  namespace: default
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: default-ultrarag-mcp-cors@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: custom-mcp-dev.metaglobe.finance
+      http:
+        paths:
+          - path: /mcp
+            pathType: Prefix
+            backend:
+              service:
+                name: ultrarag-mcp-service
+                port:
+                  number: 8008
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ultrarag-mcp-prompt-dev
+  namespace: default
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: default-ultrarag-mcp-cors@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: prompt-mcp-dev.metaglobe.finance
+      http:
+        paths:
+          - path: /mcp
+            pathType: Prefix
+            backend:
+              service:
+                name: ultrarag-mcp-service
+                port:
+                  number: 8009
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ultrarag-mcp-router-dev
+  namespace: default
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: default-ultrarag-mcp-cors@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: router-mcp-dev.metaglobe.finance
+      http:
+        paths:
+          - path: /mcp
+            pathType: Prefix
+            backend:
+              service:
+                name: ultrarag-mcp-service
+                port:
+                  number: 8010

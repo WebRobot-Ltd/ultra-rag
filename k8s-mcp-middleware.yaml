@@ -1,0 +1,29 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: ultrarag-mcp-cors
+  namespace: default
+spec:
+  headers:
+    accessControlAllowMethods:
+      - GET
+      - POST
+      - OPTIONS
+    accessControlAllowHeaders:
+      - Content-Type
+      - Accept
+      - Authorization
+    accessControlAllowOriginList:
+      - "*"
+    accessControlMaxAge: 100
+    addVaryHeader: true
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: ultrarag-mcp-auth
+  namespace: default
+spec:
+  basicAuth:
+    secret: ultrarag-mcp-basic-auth
