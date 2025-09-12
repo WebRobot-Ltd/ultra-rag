@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ultrarag-auth-module
+  namespace: default
+  labels:
+    app: ultrarag
+    component: auth-module
+binaryData:
+  auth-module.tar.gz: ""  # Will be filled with base64 encoded tar.gz

@@ -1,0 +1,15 @@
+# Authentication module requirements
+# Install with: pip install -r requirements.txt
+
+# Core dependencies
+asyncpg>=0.29.0          # PostgreSQL async driver
+PyJWT>=2.8.0             # JWT token handling
+cryptography>=41.0.0     # Cryptographic functions
+
+# Optional dependencies for enhanced security
+bcrypt>=4.0.0            # Password hashing (if needed)
+python-multipart>=0.0.6  # Multipart form handling
+
+# Development dependencies (optional)
+pytest>=7.0.0           # Testing
+pytest-asyncio>=0.21.0  # Async testing

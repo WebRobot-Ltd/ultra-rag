@@ -1,0 +1,49 @@
+{
+  "mcpServers": {
+    "ultrarag-retriever-auth": {
+      "command": "python",
+      "args": ["servers/retriever/src/retriever_auth.py"],
+      "env": {
+        "DATABASE_HOST": "localhost",
+        "DATABASE_PORT": "5432",
+        "DATABASE_NAME": "strapi",
+        "DATABASE_USERNAME": "strapi",
+        "DATABASE_PASSWORD": "strapi",
+        "JWT_SECRET": "your-jwt-secret-here",
+        "STRAPI_BASE_URL": "http://localhost:1337",
+        "DEV_API_KEY": "dev-api-key-12345",
+        "MCP_AUTH_HEADER": "Bearer your-jwt-token-here"
+      }
+    },
+    "ultrarag-generator-auth": {
+      "command": "python",
+      "args": ["servers/generator/src/generator_auth.py"],
+      "env": {
+        "DATABASE_HOST": "localhost",
+        "DATABASE_PORT": "5432",
+        "DATABASE_NAME": "strapi",
+        "DATABASE_USERNAME": "strapi",
+        "DATABASE_PASSWORD": "strapi",
+        "JWT_SECRET": "your-jwt-secret-here",
+        "STRAPI_BASE_URL": "http://localhost:1337",
+        "DEV_API_KEY": "dev-api-key-12345",
+        "MCP_AUTH_HEADER": "Bearer your-jwt-token-here"
+      }
+    },
+    "ultrarag-corpus-auth": {
+      "command": "python",
+      "args": ["servers/corpus/src/corpus_auth.py"],
+      "env": {
+        "DATABASE_HOST": "localhost",
+        "DATABASE_PORT": "5432",
+        "DATABASE_NAME": "strapi",
+        "DATABASE_USERNAME": "strapi",
+        "DATABASE_PASSWORD": "strapi",
+        "JWT_SECRET": "your-jwt-secret-here",
+        "STRAPI_BASE_URL": "http://localhost:1337",
+        "DEV_API_KEY": "dev-api-key-12345",
+        "MCP_AUTH_HEADER": "Bearer your-jwt-token-here"
+      }
+    }
+  }
+}

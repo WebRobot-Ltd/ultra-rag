@@ -1,0 +1,129 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ultrarag-auth-test
+  namespace: default
+  labels:
+    app: ultrarag-auth-test
+    component: auth-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ultrarag-auth-test
+  template:
+    metadata:
+      labels:
+        app: ultrarag-auth-test
+    spec:
+      containers:
+      - name: auth-test
+        image: python:3.11-slim
+        command: ["python", "-m", "http.server", "8080"]
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        
+        # Environment variables from ConfigMap
+        envFrom:
+        - configMapRef:
+            name: ultrarag-auth-config
+        
+        # Environment variables from Secret
+        env:
+        - name: DATABASE_HOST
+          valueFrom:
+            secretKeyRef:
+              name: ultrarag-database-secret
+              key: DATABASE_HOST
+        - name: DATABASE_PORT
+          valueFrom:
+            secretKeyRef:
+              name: ultrarag-database-secret
+              key: DATABASE_PORT
+        - name: DATABASE_NAME
+          valueFrom:
+            secretKeyRef:
+              name: ultrarag-database-secret
+              key: DATABASE_NAME
+        - name: DATABASE_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: ultrarag-database-secret
+              key: DATABASE_USERNAME
+        - name: DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ultrarag-database-secret
+              key: DATABASE_PASSWORD
+        - name: DATABASE_SSL
+          valueFrom:
+            secretKeyRef:
+              name: ultrarag-database-secret
+              key: DATABASE_SSL
+        - name: DATABASE_SCHEMA
+          valueFrom:
+            secretKeyRef:
+              name: ultrarag-database-secret
+              key: DATABASE_SCHEMA
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: ultrarag-database-secret
+              key: JWT_SECRET
+        - name: STRAPI_BASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: ultrarag-database-secret
+              key: STRAPI_BASE_URL
+        - name: INTERNAL_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: ultrarag-database-secret
+              key: INTERNAL_TOKEN
+        - name: DEV_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ultrarag-database-secret
+              key: DEV_API_KEY
+        - name: DEV_USER_ID
+          valueFrom:
+            secretKeyRef:
+              name: ultrarag-database-secret
+              key: DEV_USER_ID
+        - name: DEV_ROLE
+          valueFrom:
+            secretKeyRef:
+              name: ultrarag-database-secret
+              key: DEV_ROLE
+        - name: DEV_ORG_ID
+          valueFrom:
+            secretKeyRef:
+              name: ultrarag-database-secret
+              key: DEV_ORG_ID
+        - name: DEV_SCOPES
+          valueFrom:
+            secretKeyRef:
+              name: ultrarag-database-secret
+              key: DEV_SCOPES
+        
+        # Copy auth module to container
+        volumeMounts:
+        - name: auth-module
+          mountPath: /app/auth
+          readOnly: true
+        
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "200m"
+      
+      volumes:
+      - name: auth-module
+        configMap:
+          name: ultrarag-auth-module
+          defaultMode: 0755
