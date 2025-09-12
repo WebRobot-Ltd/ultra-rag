@@ -1,0 +1,33 @@
+# Environment files with sensitive data
+config.env
+.env
+*.env
+
+# Database connection logs
+*.log
+
+# Temporary files
+auth-module.tar.gz
+auth-module-base64.txt
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test data
+test_data/
+temp/
