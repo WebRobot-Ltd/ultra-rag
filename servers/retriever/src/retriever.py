@@ -16,7 +16,19 @@ from fastmcp.exceptions import NotFoundError, ToolError, ValidationError
 from ultrarag.server import UltraRAG_MCP_Server
 from pathlib import Path
 
-app = UltraRAG_MCP_Server("retriever")
+# Initialize server with authentication enabled
+enable_auth = os.environ.get('ENABLE_AUTH', 'false').lower() == 'true'
+auth_config = {
+    'database_url': os.environ.get('DATABASE_URL', 'postgresql://user:password@localhost:5432/strapi'),
+    'jwt_secret': os.environ.get('JWT_SECRET', 'your-secret-key'),
+    'api_key_header': 'X-API-Key'
+}
+
+app = UltraRAG_MCP_Server(
+    "retriever",
+    enable_auth=enable_auth,
+    auth_config=auth_config
+)
 retriever_app = Flask(__name__)
 
 
@@ -1095,6 +1107,22 @@ class Retriever:
         return {"ret_psg": ret}
 
 
+# Add authentication middleware for Flask app
+@retriever_app.before_request
+def authenticate_request():
+    """Authenticate incoming requests"""
+    if enable_auth and app.enable_auth:
+        # Get request headers
+        headers = dict(request.headers)
+        
+        # Authenticate the request
+        if not app.authenticate_request(headers):
+            return jsonify({
+                "error": "Unauthorized",
+                "message": "Authentication required. Please provide a valid API key or JWT token."
+            }), 401
+
+
 if __name__ == "__main__":
     import sys
     import argparse
@@ -1111,4 +1139,4 @@ if __name__ == "__main__":
     if args.transport == 'http':
         app.run(transport="http", host=args.host, port=args.port)
     else:
-        app.run(transport="stdio")
+    app.run(transport="stdio")

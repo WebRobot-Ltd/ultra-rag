@@ -30,6 +30,20 @@ class MCPServerManager:
         self.processes = []
         self.base_path = Path(__file__).parent
         
+        # Authentication configuration
+        self.enable_auth = os.environ.get('ENABLE_AUTH', 'false').lower() == 'true'
+        self.auth_config = {
+            'database_url': os.environ.get('DATABASE_URL', 'postgresql://user:password@localhost:5432/strapi'),
+            'jwt_secret': os.environ.get('JWT_SECRET', 'your-secret-key'),
+            'api_key_header': 'X-API-Key'
+        }
+        
+        if self.enable_auth:
+            print("🔐 Authentication enabled for MCP servers")
+            print(f"   Database URL: {self.auth_config['database_url']}")
+        else:
+            print("⚠️  Authentication disabled for MCP servers")
+        
     def start_server(self, server_name):
         """Start a single MCP server"""
         server_path = self.base_path / "servers" / server_name / "src" / f"{server_name}.py"
@@ -40,11 +54,19 @@ class MCPServerManager:
             
         try:
             print(f"🚀 Starting MCP server: {server_name}")
+            
+            # Prepare environment variables
+            env = os.environ.copy()
+            env['ENABLE_AUTH'] = str(self.enable_auth).lower()
+            env['DATABASE_URL'] = self.auth_config['database_url']
+            env['JWT_SECRET'] = self.auth_config['jwt_secret']
+            
             process = subprocess.Popen(
                 [sys.executable, str(server_path)],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                text=True
+                text=True,
+                env=env
             )
             self.processes.append((server_name, process))
             print(f"✅ Server {server_name} started with PID {process.pid}")

@@ -16,8 +16,19 @@ from fastmcp.exceptions import ToolError
 from ultrarag.server import UltraRAG_MCP_Server
 from ultrarag.utils import popen_follow_parent
 
+# Initialize server with authentication enabled
+enable_auth = os.environ.get('ENABLE_AUTH', 'false').lower() == 'true'
+auth_config = {
+    'database_url': os.environ.get('DATABASE_URL', 'postgresql://user:password@localhost:5432/strapi'),
+    'jwt_secret': os.environ.get('JWT_SECRET', 'your-secret-key'),
+    'api_key_header': 'X-API-Key'
+}
 
-app = UltraRAG_MCP_Server("generation")
+app = UltraRAG_MCP_Server(
+    "generation",
+    enable_auth=enable_auth,
+    auth_config=auth_config
+)
 httpx_logger.setLevel(logging.WARNING)
 
 

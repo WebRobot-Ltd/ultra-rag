@@ -2,8 +2,19 @@ from typing import List, Dict
 
 from ultrarag.server import UltraRAG_MCP_Server
 
+# Initialize server with authentication enabled
+enable_auth = os.environ.get('ENABLE_AUTH', 'false').lower() == 'true'
+auth_config = {
+    'database_url': os.environ.get('DATABASE_URL', 'postgresql://user:password@localhost:5432/strapi'),
+    'jwt_secret': os.environ.get('JWT_SECRET', 'your-secret-key'),
+    'api_key_header': 'X-API-Key'
+}
 
-app = UltraRAG_MCP_Server("router")
+app = UltraRAG_MCP_Server(
+    "router",
+    enable_auth=enable_auth,
+    auth_config=auth_config
+)
 
 
 @app.tool(output="query_list")

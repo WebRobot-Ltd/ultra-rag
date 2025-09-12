@@ -11,8 +11,20 @@ from infinity_emb.log_handler import LOG_LEVELS, logger
 from fastmcp.exceptions import ToolError
 from ultrarag.server import UltraRAG_MCP_Server
 
+# Initialize server with authentication enabled
+enable_auth = os.environ.get('ENABLE_AUTH', 'false').lower() == 'true'
+auth_config = {
+    'database_url': os.environ.get('DATABASE_URL', 'postgresql://user:password@localhost:5432/strapi'),
+    'jwt_secret': os.environ.get('JWT_SECRET', 'your-secret-key'),
+    'api_key_header': 'X-API-Key'
+}
+
 retriever_app = Flask(__name__)
-app = UltraRAG_MCP_Server("reranker")
+app = UltraRAG_MCP_Server(
+    "reranker",
+    enable_auth=enable_auth,
+    auth_config=auth_config
+)
 
 
 class Reranker:

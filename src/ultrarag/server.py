@@ -19,6 +19,15 @@ from fastmcp.client import Client
 from fastmcp.tools.tool import Tool
 import logging
 
+# Import authentication modules
+try:
+    from auth.auth_manager import AuthManager
+    from auth.api_key_validator import APIKeyValidator
+    from auth.database_client import DatabaseClient
+    AUTH_AVAILABLE = True
+except ImportError:
+    AUTH_AVAILABLE = False
+
 NotSet = ...
 NotSetT: TypeAlias = EllipsisType
 
@@ -66,10 +75,36 @@ class UltraRAG_MCP_Server(FastMCP):
         streamable_http_path: str | None = None,
         json_response: bool | None = None,
         stateless_http: bool | None = None,
+        # Authentication parameters
+        enable_auth: bool = False,
+        auth_config: dict | None = None,
     ):
         name = name or "UltraRAG"
         level = os.environ.get("log_level", "warn")
         self.logger = get_logger(name, level)
+
+        # Initialize authentication
+        self.enable_auth = enable_auth
+        self.auth_manager = None
+        self.api_key_validator = None
+        
+        if enable_auth and AUTH_AVAILABLE:
+            try:
+                # Initialize authentication components
+                self.auth_manager = AuthManager()
+                self.api_key_validator = APIKeyValidator()
+                
+                # Configure authentication if config provided
+                if auth_config:
+                    self.auth_manager.configure(auth_config)
+                    
+                self.logger.info(f"Authentication enabled for {name}")
+            except Exception as e:
+                self.logger.error(f"Failed to initialize authentication: {e}")
+                self.enable_auth = False
+        elif enable_auth and not AUTH_AVAILABLE:
+            self.logger.warning("Authentication requested but auth modules not available")
+            self.enable_auth = False
 
         super().__init__(
             name,
@@ -107,6 +142,43 @@ class UltraRAG_MCP_Server(FastMCP):
     def load_config(self, file_path: str):
         with open(file_path, "r", encoding="utf-8") as f:
             return yaml.safe_load(f) or {}
+
+    def authenticate_request(self, request_headers: dict) -> bool:
+        """
+        Authenticate a request using API key or JWT token
+        Returns True if authentication is successful, False otherwise
+        """
+        if not self.enable_auth or not self.auth_manager:
+            return True  # No authentication required
+        
+        try:
+            # Check for API key in headers
+            api_key = request_headers.get('X-API-Key') or request_headers.get('Authorization')
+            
+            if api_key:
+                # Remove 'Bearer ' prefix if present
+                if api_key.startswith('Bearer '):
+                    api_key = api_key[7:]
+                
+                # Validate API key
+                if self.api_key_validator and self.api_key_validator.validate_api_key(api_key):
+                    self.logger.debug("API key authentication successful")
+                    return True
+            
+            # Check for JWT token
+            jwt_token = request_headers.get('Authorization')
+            if jwt_token and jwt_token.startswith('Bearer '):
+                jwt_token = jwt_token[7:]
+                if self.auth_manager.validate_jwt_token(jwt_token):
+                    self.logger.debug("JWT token authentication successful")
+                    return True
+            
+            self.logger.warning("Authentication failed: No valid credentials provided")
+            return False
+            
+        except Exception as e:
+            self.logger.error(f"Authentication error: {e}")
+            return False
 
     def tool(
         self,
