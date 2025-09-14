@@ -25,6 +25,9 @@ dependencies = [
     "flask[async]",
     "exa_py",
     "tavily-python",
+    "asyncpg>=0.29.0",
+    "PyJWT>=2.8.0",
+    "cryptography>=41.0.0",
 ]
 
 [project.optional-dependencies]
