@@ -1139,4 +1139,4 @@ if __name__ == "__main__":
     if args.transport == 'http':
         app.run(transport="http", host=args.host, port=args.port)
     else:
-    app.run(transport="stdio")
+        app.run(transport="stdio")
