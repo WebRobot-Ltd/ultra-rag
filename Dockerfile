@@ -55,8 +55,8 @@ RUN conda env create -f environment.yml
 # Activate environment and install dependencies
 ENV PATH="/opt/miniconda/envs/ultrarag/bin:$PATH"
 RUN python -m ensurepip && \
-    pip install --no-cache-dir uv && \
-    uv pip install -e . --system
+    pip install --no-cache-dir -e . && \
+    pip install --no-cache-dir -r auth/requirements.txt
 
 # Create directories for config and data
 RUN mkdir -p /app/config /app/data /app/logs && \
