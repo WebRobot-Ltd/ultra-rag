@@ -8,8 +8,8 @@ from typing import Optional, Dict, Any, Set, Callable
 from functools import wraps
 import logging
 
-from auth_manager import AuthManager
-from database_client import DatabaseConfig
+from .auth_manager import AuthManager
+from .database_client import DatabaseConfig
 
 logger = logging.getLogger(__name__)
 

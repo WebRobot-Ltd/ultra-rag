@@ -7,9 +7,9 @@ import os
 from typing import Optional, Dict, Any, Set
 import logging
 
-from jwt_validator import JWTValidator
-from api_key_validator import APIKeyValidator
-from database_client import DatabaseClient, DatabaseConfig
+from .jwt_validator import JWTValidator
+from .api_key_validator import APIKeyValidator
+from .database_client import DatabaseClient, DatabaseConfig
 
 logger = logging.getLogger(__name__)
 
