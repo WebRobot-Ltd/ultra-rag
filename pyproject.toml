@@ -7,7 +7,7 @@ name = "ultrarag"
 version = "0.0.1"
 description = "UltraRAG 2.0"
 readme = "README.md"
-requires-python = ">=3.11, <3.13"
+requires-python = ">=3.11, <3.14"
 dependencies = [
     "fastmcp==2.11.3",
     "Jinja2",
