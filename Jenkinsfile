@@ -205,11 +205,20 @@ data:
   MILVUS_HOST: "${MILVUS_HOST}"
   MILVUS_PORT: "${MILVUS_PORT}"
   ENABLE_AUTH: "${ENABLE_AUTH}"
-  DATABASE_URL: "postgresql://postgres:ha1LXtCLPRkp@nuvolaris-postgres.nuvolaris.svc.cluster.local:5432/webrobotdb"
   JWT_SECRET: "ultrarag-jwt-secret-2025"
 EOF
                             
-                            # Deploy Secret (placeholder)
+                            # Deploy Database Secret
+                            kubectl create secret generic ultrarag-database-secret -n ${K8S_NAMESPACE} \
+                              --from-literal=DATABASE_HOST='nuvolaris-postgres.nuvolaris.svc.cluster.local' \
+                              --from-literal=DATABASE_PORT='5432' \
+                              --from-literal=DATABASE_NAME='webrobotdb' \
+                              --from-literal=DATABASE_USERNAME='postgres' \
+                              --from-literal=DATABASE_PASSWORD='ha1LXtCLPRkp' \
+                              --from-literal=DATABASE_URL='postgresql://postgres:ha1LXtCLPRkp@nuvolaris-postgres.nuvolaris.svc.cluster.local:5432/webrobotdb' \
+                              --dry-run=client -o yaml | kubectl apply -f -
+                            
+                            # Deploy Other Secrets
                             cat <<EOF | kubectl apply -f -
 apiVersion: v1
 kind: Secret
