@@ -106,11 +106,20 @@ class UltraRAG_MCP_Server(FastMCP):
             self.logger.warning("Authentication requested but auth modules not available")
             self.enable_auth = False
 
+        # Prepare middleware: attach auth middleware when enabled
+        combined_middleware = middleware[:] if middleware else []
+        if self.enable_auth and AUTH_AVAILABLE:
+            try:
+                combined_middleware.append(self._create_auth_middleware())
+            except Exception as e:
+                self.logger.error(f"Failed to attach auth middleware: {e}")
+
         super().__init__(
             name,
             instructions,
             version=version,
             auth=auth,
+            middleware=combined_middleware,
             lifespan=lifespan,
             tool_serializer=tool_serializer,
             on_duplicate_tools=on_duplicate_tools,
@@ -428,36 +437,45 @@ class UltraRAG_MCP_Server(FastMCP):
         )
     
     def _create_auth_middleware(self):
-        """Create authentication middleware for HTTP requests"""
+        """Create authentication middleware for HTTP requests (FastMCP)."""
         if not self.enable_auth or not AUTH_AVAILABLE:
             return None
-            
-        class AuthMiddleware:
-            def __init__(self, server):
-                self.server = server
-            
-            async def __call__(self, context: MiddlewareContext):
-                # Extract headers from the request
+
+        server_ref = self
+
+        async def auth_middleware(context: MiddlewareContext, next_callable=None):
+            # Best-effort extraction of headers from context
+            headers: dict[str, str] = {}
+            try:
+                req = getattr(context, "request", None)
+                if req is not None and hasattr(req, "headers"):
+                    headers = dict(req.headers)  # type: ignore[arg-type]
+                elif hasattr(context, "headers"):
+                    headers = dict(getattr(context, "headers"))  # type: ignore[arg-type]
+            except Exception:
                 headers = {}
-                if hasattr(context, 'request') and hasattr(context.request, 'headers'):
-                    headers = dict(context.request.headers)
-                elif hasattr(context, 'headers'):
-                    headers = dict(context.headers)
-                
-                # Authenticate the request
-                if not self.server.authenticate_request(headers):
-                    # Return 401 Unauthorized response
-                    from fastmcp.server.middleware import MiddlewareResponse
+
+            # Authenticate
+            if not server_ref.authenticate_request(headers):
+                # Fallback 401 response; different FastMCP versions may have different APIs
+                try:
+                    from fastmcp.server.middleware import MiddlewareResponse  # type: ignore
                     return MiddlewareResponse(
                         status_code=401,
                         headers={"Content-Type": "application/json"},
-                        body='{"error": "Unauthorized", "message": "Authentication required. Please provide a valid API key or JWT token."}'
+                        body='{"error":"Unauthorized","message":"Authentication required. Provide valid API key or JWT."}'
                     )
-                
-                # Continue to next middleware or handler
-                return await context.next()
-        
-        return AuthMiddleware(self)
+                except Exception:
+                    raise PermissionError("Unauthorized")
+
+            # Continue the pipeline
+            if next_callable is not None:
+                return await next_callable()
+            if hasattr(context, "next"):
+                return await context.next()  # type: ignore[attr-defined]
+            return None
+
+        return auth_middleware
 
 
 logging.getLogger("mcp").setLevel(logging.WARNING)
