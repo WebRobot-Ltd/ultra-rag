@@ -32,6 +32,17 @@ async def _auth_ok(headers: Dict[str, str]) -> bool:
     if not AUTH_AVAILABLE:
         return False
 
+    # Import database client here to avoid circular imports
+    try:
+        from auth.database_client import DatabaseClient
+        from auth.config import get_database_config
+        
+        db_config = get_database_config()
+        db_client = DatabaseClient(db_config)
+    except Exception as e:
+        print(f"Failed to initialize database client: {e}")
+        return False
+
     api_key = headers.get("x-api-key") or headers.get("authorization")
     if api_key:
         if api_key.startswith("Bearer "):
@@ -39,23 +50,28 @@ async def _auth_ok(headers: Dict[str, str]) -> bool:
             # Try JWT first
             try:
                 manager = AuthManager()
-                if manager.validate_jwt_token(token):
+                if await manager.validate_jwt_token(token):
                     return True
-            except Exception:
+            except Exception as e:
+                print(f"JWT validation failed: {e}")
                 pass
             # Fallback to raw API key validation
             try:
                 validator = APIKeyValidator()
-                if validator.validate_api_key(token):
+                result = await validator.validate_api_key(token, db_client)
+                if result:
                     return True
-            except Exception:
+            except Exception as e:
+                print(f"API key validation failed: {e}")
                 pass
         else:
             try:
                 validator = APIKeyValidator()
-                if validator.validate_api_key(api_key):
+                result = await validator.validate_api_key(api_key, db_client)
+                if result:
                     return True
-            except Exception:
+            except Exception as e:
+                print(f"API key validation failed: {e}")
                 pass
 
     return False

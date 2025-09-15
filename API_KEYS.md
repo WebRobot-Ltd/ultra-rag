@@ -9,9 +9,9 @@
 ### Dettagli API Key
 
 ```
-API Key ID: GkjLkSBR
-API Key Secret: hlgiJtPJ9YkD7XqQw8zLcUkQqfv8I2DI
-API Key Completa: GkjLkSBR:hlgiJtPJ9YkD7XqQw8zLcUkQqfv8I2DI
+API Key ID: M7YjfDoD
+API Key Secret: 9N9n10uxAe60M6ieGwOuPPRIDzlZooJu
+API Key Completa: M7YjfDoD:9N9n10uxAe60M6ieGwOuPPRIDzlZooJu
 ```
 
 ### Utilizzo
@@ -19,7 +19,7 @@ API Key Completa: GkjLkSBR:hlgiJtPJ9YkD7XqQw8zLcUkQqfv8I2DI
 Per testare l'autenticazione sui servizi MCP UltraRAG, utilizzare questa API key nell'header:
 
 ```bash
-curl -H "X-API-Key: GkjLkSBR:hlgiJtPJ9YkD7XqQw8zLcUkQqfv8I2DI" \
+curl -H "X-API-Key: M7YjfDoD:9N9n10uxAe60M6ieGwOuPPRIDzlZooJu" \
      -X POST "https://retriever-mcp.metaglobe.finance/mcp" \
      -H 'Content-Type: application/json' \
      -d '{"jsonrpc": "2.0", "method": "initialize", "params": {}, "id": 1}'
@@ -39,7 +39,7 @@ curl -H "X-API-Key: GkjLkSBR:hlgiJtPJ9YkD7XqQw8zLcUkQqfv8I2DI" \
 
 ### Database
 
-- **Host:** postgres-nuvolaris-service.nuvolaris.svc.cluster.local
+- **Host:** nuvolaris-postgres.nuvolaris.svc.cluster.local
 - **Port:** 5432
 - **Database:** webrobotdb
 - **User:** postgres

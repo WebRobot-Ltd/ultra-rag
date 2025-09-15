@@ -205,7 +205,7 @@ data:
   MILVUS_HOST: "${MILVUS_HOST}"
   MILVUS_PORT: "${MILVUS_PORT}"
   ENABLE_AUTH: "${ENABLE_AUTH}"
-  DATABASE_URL: "postgresql://postgres:ha1LXtCLPRkp@postgres-nuvolaris-service.nuvolaris.svc.cluster.local:5432/webrobotdb"
+  DATABASE_URL: "postgresql://postgres:ha1LXtCLPRkp@nuvolaris-postgres.nuvolaris.svc.cluster.local:5432/webrobotdb"
   JWT_SECRET: "ultrarag-jwt-secret-2025"
 EOF
                             

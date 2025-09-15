@@ -20,7 +20,7 @@ DOMAIN="retriever-mcp.metaglobe.finance"
 URL="https://${DOMAIN}/mcp"
 
 # API Key di test (puoi modificare questo valore)
-API_KEY="GkjLkSBR:hlgiJtPJ9YkD7XqQw8zLcUkQqfv8I2DI"
+API_KEY="M7YjfDoD:9N9n10uxAe60M6ieGwOuPPRIDzlZooJu"
 
 echo -e "\n${YELLOW}📋 Testando autenticazione su ${DOMAIN}...${NC}\n"
 
