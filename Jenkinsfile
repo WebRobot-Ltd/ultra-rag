@@ -221,21 +221,7 @@ data:
   ANTHROPIC_API_KEY: cGxhY2Vob2xkZXI=
 EOF
                             
-                            # Deploy Service
-                            cat <<EOF | kubectl apply -f -
-apiVersion: v1
-kind: Service
-metadata:
-  name: ultrarag-service
-  namespace: ${K8S_NAMESPACE}
-spec:
-  selector:
-    app: ultrarag
-  ports:
-  - port: 8000
-    targetPort: 8000
-  type: ClusterIP
-EOF
+                            # Service is deployed via k8s/deployment-single-pod.yaml
                             
                             # Deploy new single pod deployment with auth proxy
                             kubectl apply -f k8s/deployment-single-pod.yaml
@@ -350,65 +336,7 @@ spec:
           periodSeconds: 30
 EOF
                             
-                            # Deploy MCP Service
-                            cat <<EOF | kubectl apply -f -
-apiVersion: v1
-kind: Service
-metadata:
-  name: ultrarag-mcp-service
-  namespace: ${K8S_NAMESPACE}
-  labels:
-    app: ultrarag
-spec:
-  type: ClusterIP
-  ports:
-  - name: health
-    port: 8000
-    targetPort: 8000
-    protocol: TCP
-  - name: sayhello
-    port: 8001
-    targetPort: 8001
-    protocol: TCP
-  - name: retriever
-    port: 8002
-    targetPort: 8002
-    protocol: TCP
-  - name: generation
-    port: 8003
-    targetPort: 8003
-    protocol: TCP
-  - name: corpus
-    port: 8004
-    targetPort: 8004
-    protocol: TCP
-  - name: reranker
-    port: 8005
-    targetPort: 8005
-    protocol: TCP
-  - name: evaluation
-    port: 8006
-    targetPort: 8006
-    protocol: TCP
-  - name: benchmark
-    port: 8007
-    targetPort: 8007
-    protocol: TCP
-  - name: custom
-    port: 8008
-    targetPort: 8008
-    protocol: TCP
-  - name: prompt
-    port: 8009
-    targetPort: 8009
-    protocol: TCP
-  - name: router
-    port: 8010
-    targetPort: 8010
-    protocol: TCP
-  selector:
-    app: ultrarag
-EOF
+                            # MCP Service is deployed via k8s/deployment-single-pod.yaml
                             
                             # Verify MCP Authentication Secret exists
                             if ! kubectl get secret ultrarag-mcp-auth -n ${K8S_NAMESPACE} &>/dev/null; then
