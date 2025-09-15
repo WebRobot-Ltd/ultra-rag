@@ -1,3 +1,4 @@
+print("Starting retriever.py...")
 import os
 from urllib.parse import urlparse, urlunparse
 from typing import Any, Dict, List, Optional
@@ -24,11 +25,13 @@ auth_config = {
     'api_key_header': 'X-API-Key'
 }
 
+print(f"Creating UltraRAG_MCP_Server with enable_auth={enable_auth}")
 app = UltraRAG_MCP_Server(
     "retriever",
     enable_auth=enable_auth,
     auth_config=auth_config
 )
+print(f"UltraRAG_MCP_Server created successfully")
 class Retriever:
     def __init__(self, mcp_inst: UltraRAG_MCP_Server):
         # Core embedding functions (always available)

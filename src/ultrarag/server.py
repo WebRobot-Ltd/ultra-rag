@@ -104,9 +104,12 @@ class UltraRAG_MCP_Server(FastMCP):
 
         # Prepare middleware: attach auth middleware when enabled
         combined_middleware = middleware[:] if middleware else []
+        self.logger.info(f"Auth status - enable_auth: {self.enable_auth}, AUTH_AVAILABLE: {AUTH_AVAILABLE}")
         if self.enable_auth and AUTH_AVAILABLE:
             try:
-                combined_middleware.append(self._create_auth_middleware())
+                auth_middleware = self._create_auth_middleware()
+                combined_middleware.append(auth_middleware)
+                self.logger.info(f"Authentication middleware added successfully. Total middleware count: {len(combined_middleware)}")
             except Exception as e:
                 self.logger.error(f"Failed to attach auth middleware: {e}")
 
@@ -440,6 +443,7 @@ class UltraRAG_MCP_Server(FastMCP):
         server_ref = self
 
         async def auth_middleware(context: MiddlewareContext, next_callable=None):
+            server_ref.logger.info("Auth middleware called!")
             # Best-effort extraction of headers from context
             headers: dict[str, str] = {}
             try:
@@ -448,7 +452,9 @@ class UltraRAG_MCP_Server(FastMCP):
                     headers = dict(req.headers)  # type: ignore[arg-type]
                 elif hasattr(context, "headers"):
                     headers = dict(getattr(context, "headers"))  # type: ignore[arg-type]
-            except Exception:
+                server_ref.logger.info(f"Extracted headers: {headers}")
+            except Exception as e:
+                server_ref.logger.error(f"Failed to extract headers: {e}")
                 headers = {}
 
             # Authenticate

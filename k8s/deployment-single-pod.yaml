@@ -1,0 +1,154 @@
+# Single pod deployment with supervisor managing all MCP servers + auth proxies
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ultrarag-mcp-single
+  namespace: default
+  labels:
+    app: ultrarag-mcp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ultrarag-mcp
+  template:
+    metadata:
+      labels:
+        app: ultrarag-mcp
+    spec:
+      containers:
+      - name: ultrarag
+        image: ghcr.io/webrobot/ultrarag:latest
+        ports:
+        # Health check
+        - containerPort: 8080
+          name: health
+        # MCP servers (original ports - internal only)
+        - containerPort: 8002
+          name: retriever
+        - containerPort: 8003
+          name: generation
+        - containerPort: 8004
+          name: corpus
+        - containerPort: 8005
+          name: reranker
+        - containerPort: 8006
+          name: evaluation
+        - containerPort: 8007
+          name: benchmark
+        - containerPort: 8008
+          name: custom
+        - containerPort: 8009
+          name: prompt
+        - containerPort: 8010
+          name: router
+        # Auth proxies (external ports)
+        - containerPort: 8100
+          name: retriever-proxy
+        - containerPort: 8101
+          name: generation-proxy
+        - containerPort: 8102
+          name: corpus-proxy
+        - containerPort: 8103
+          name: reranker-proxy
+        - containerPort: 8104
+          name: evaluation-proxy
+        - containerPort: 8105
+          name: benchmark-proxy
+        - containerPort: 8106
+          name: custom-proxy
+        - containerPort: 8107
+          name: prompt-proxy
+        - containerPort: 8108
+          name: router-proxy
+        env:
+        - name: ENABLE_AUTH
+          value: "false"  # Disabled in main containers, handled by proxies
+        - name: DATABASE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: ultrarag-config
+              key: DATABASE_URL
+        - name: JWT_SECRET
+          valueFrom:
+            configMapKeyRef:
+              name: ultrarag-config
+              key: JWT_SECRET
+        command: ["/usr/bin/supervisord"]
+        args: ["-c", "/ultrarag/supervisord.conf"]
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+
+---
+# Service exposing all auth proxy ports
+apiVersion: v1
+kind: Service
+metadata:
+  name: ultrarag-mcp-service
+  namespace: default
+  labels:
+    app: ultrarag-mcp
+spec:
+  selector:
+    app: ultrarag-mcp
+  ports:
+  # Health check
+  - name: health
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  # Auth proxy ports (these are what ingress will use)
+  - name: retriever-proxy
+    port: 8100
+    targetPort: 8100
+    protocol: TCP
+  - name: generation-proxy
+    port: 8101
+    targetPort: 8101
+    protocol: TCP
+  - name: corpus-proxy
+    port: 8102
+    targetPort: 8102
+    protocol: TCP
+  - name: reranker-proxy
+    port: 8103
+    targetPort: 8103
+    protocol: TCP
+  - name: evaluation-proxy
+    port: 8104
+    targetPort: 8104
+    protocol: TCP
+  - name: benchmark-proxy
+    port: 8105
+    targetPort: 8105
+    protocol: TCP
+  - name: custom-proxy
+    port: 8106
+    targetPort: 8106
+    protocol: TCP
+  - name: prompt-proxy
+    port: 8107
+    targetPort: 8107
+    protocol: TCP
+  - name: router-proxy
+    port: 8108
+    targetPort: 8108
+    protocol: TCP
+  type: ClusterIP

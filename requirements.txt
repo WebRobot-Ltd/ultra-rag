@@ -35,3 +35,7 @@ tabulate>=0.9.0  # for table formatting
 asyncpg>=0.29.0          # PostgreSQL async driver
 PyJWT>=2.8.0             # JWT token handling
 cryptography>=41.0.0     # Cryptographic functions
+
+# Auth proxy dependencies
+starlette>=0.27.0        # ASGI framework for auth proxy
+uvicorn>=0.35.0          # ASGI server for auth proxy

@@ -19,7 +19,7 @@ spec:
               service:
                 name: ultrarag-mcp-service
                 port:
-                  number: 8002
+                  number: 8100
 
 ---
 apiVersion: networking.k8s.io/v1
@@ -42,7 +42,7 @@ spec:
               service:
                 name: ultrarag-mcp-service
                 port:
-                  number: 8003
+                  number: 8101
 
 ---
 apiVersion: networking.k8s.io/v1
@@ -65,7 +65,7 @@ spec:
               service:
                 name: ultrarag-mcp-service
                 port:
-                  number: 8004
+                  number: 8102
 
 ---
 apiVersion: networking.k8s.io/v1
@@ -88,7 +88,7 @@ spec:
               service:
                 name: ultrarag-mcp-service
                 port:
-                  number: 8005
+                  number: 8103
 
 ---
 apiVersion: networking.k8s.io/v1
@@ -111,7 +111,7 @@ spec:
               service:
                 name: ultrarag-mcp-service
                 port:
-                  number: 8006
+                  number: 8104
 
 ---
 apiVersion: networking.k8s.io/v1
@@ -134,7 +134,7 @@ spec:
               service:
                 name: ultrarag-mcp-service
                 port:
-                  number: 8007
+                  number: 8105
 
 ---
 apiVersion: networking.k8s.io/v1
@@ -157,7 +157,7 @@ spec:
               service:
                 name: ultrarag-mcp-service
                 port:
-                  number: 8008
+                  number: 8106
 
 ---
 apiVersion: networking.k8s.io/v1
@@ -180,7 +180,7 @@ spec:
               service:
                 name: ultrarag-mcp-service
                 port:
-                  number: 8009
+                  number: 8107
 
 ---
 apiVersion: networking.k8s.io/v1
@@ -203,4 +203,4 @@ spec:
               service:
                 name: ultrarag-mcp-service
                 port:
-                  number: 8010
+                  number: 8108

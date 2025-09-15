@@ -1,0 +1,113 @@
+# Deployment template for MCP servers with auth proxy sidecar
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ultrarag-mcp-with-auth
+  namespace: default
+  labels:
+    app: ultrarag-mcp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ultrarag-mcp
+  template:
+    metadata:
+      labels:
+        app: ultrarag-mcp
+    spec:
+      containers:
+      # Main MCP server container
+      - name: mcp-server
+        image: ghcr.io/webrobot/ultrarag:latest
+        ports:
+        - containerPort: 8002
+          name: mcp-port
+        env:
+        - name: ENABLE_AUTH
+          value: "false"  # Disable auth in main container since proxy handles it
+        - name: DATABASE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: ultrarag-config
+              key: DATABASE_URL
+        - name: JWT_SECRET
+          valueFrom:
+            configMapKeyRef:
+              name: ultrarag-config
+              key: JWT_SECRET
+        command: ["/opt/miniconda/envs/ultrarag/bin/python"]
+        args: ["servers/retriever/src/retriever.py", "--transport", "http", "--port", "8002", "--host", "0.0.0.0"]
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+      
+      # Auth proxy sidecar
+      - name: auth-proxy
+        image: ghcr.io/webrobot/ultrarag:latest
+        ports:
+        - containerPort: 8100
+          name: proxy-port
+        env:
+        - name: UPSTREAM_URL
+          value: "http://127.0.0.1:8002/mcp"
+        - name: DATABASE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: ultrarag-config
+              key: DATABASE_URL
+        - name: JWT_SECRET
+          valueFrom:
+            configMapKeyRef:
+              name: ultrarag-config
+              key: JWT_SECRET
+        command: ["/opt/miniconda/envs/ultrarag/bin/uvicorn"]
+        args: ["servers.auth_proxy.app:app", "--host", "0.0.0.0", "--port", "8100"]
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "250m"
+        livenessProbe:
+          httpGet:
+            path: /mcp
+            port: 8100
+            httpHeaders:
+            - name: Accept
+              value: application/json, text/event-stream
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /mcp
+            port: 8100
+            httpHeaders:
+            - name: Accept
+              value: application/json, text/event-stream
+          initialDelaySeconds: 5
+          periodSeconds: 5
+
+---
+# Service pointing to auth proxy
+apiVersion: v1
+kind: Service
+metadata:
+  name: ultrarag-mcp-service
+  namespace: default
+  labels:
+    app: ultrarag-mcp
+spec:
+  selector:
+    app: ultrarag-mcp
+  ports:
+  - name: mcp
+    port: 80
+    targetPort: 8100  # Point to auth proxy instead of main server
+    protocol: TCP
+  type: ClusterIP
