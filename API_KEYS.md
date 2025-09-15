@@ -41,7 +41,7 @@ curl -H "X-API-Key: GkjLkSBR:hlgiJtPJ9YkD7XqQw8zLcUkQqfv8I2DI" \
 
 - **Host:** postgres-nuvolaris-service.nuvolaris.svc.cluster.local
 - **Port:** 5432
-- **Database:** strapi
+- **Database:** webrobotdb
 - **User:** postgres
 - **Tabella:** api_keys
 
