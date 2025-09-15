@@ -29,9 +29,6 @@ app = UltraRAG_MCP_Server(
     enable_auth=enable_auth,
     auth_config=auth_config
 )
-retriever_app = Flask(__name__)
-
-
 class Retriever:
     def __init__(self, mcp_inst: UltraRAG_MCP_Server):
         # Core embedding functions (always available)
@@ -1105,22 +1102,6 @@ class Retriever:
             ret[idx] = psg_ls
 
         return {"ret_psg": ret}
-
-
-# Add authentication middleware for Flask app
-@retriever_app.before_request
-def authenticate_request():
-    """Authenticate incoming requests"""
-    if enable_auth and app.enable_auth:
-        # Get request headers
-        headers = dict(request.headers)
-        
-        # Authenticate the request
-        if not app.authenticate_request(headers):
-            return jsonify({
-                "error": "Unauthorized",
-                "message": "Authentication required. Please provide a valid API key or JWT token."
-            }), 401
 
 
 if __name__ == "__main__":
