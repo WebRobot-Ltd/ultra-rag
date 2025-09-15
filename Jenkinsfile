@@ -296,9 +296,15 @@ spec:
               name: ultrarag-secrets
               key: ANTHROPIC_API_KEY
         - name: EXA_API_KEY
-          value: ""
+          valueFrom:
+            secretKeyRef:
+              name: search-apis-secret
+              key: exa-api-key
         - name: TAVILY_API_KEY
-          value: ""
+          valueFrom:
+            secretKeyRef:
+              name: search-apis-secret
+              key: tavily-api-key
         - name: ENABLE_AUTH
           value: "${ENABLE_AUTH}"
         - name: DATABASE_URL
