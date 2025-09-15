@@ -44,6 +44,21 @@ pipeline {
             defaultValue: true,
             description: 'Abilita supporto GPU nel deployment'
         )
+        booleanParam(
+            name: 'ENABLE_AUTH',
+            defaultValue: false,
+            description: 'Abilita autenticazione Python integrata sui server MCP'
+        )
+        stringParam(
+            name: 'DATABASE_URL',
+            defaultValue: 'postgresql://user:password@localhost:5432/strapi',
+            description: 'URL del database per autenticazione'
+        )
+        stringParam(
+            name: 'JWT_SECRET',
+            defaultValue: 'your-secret-key',
+            description: 'Chiave segreta per validazione JWT'
+        )
     }
 
     stages {
@@ -289,6 +304,12 @@ spec:
             secretKeyRef:
               name: search-apis-secret
               key: tavily-api-key
+        - name: ENABLE_AUTH
+          value: "${params.ENABLE_AUTH}"
+        - name: DATABASE_URL
+          value: "${params.DATABASE_URL}"
+        - name: JWT_SECRET
+          value: "${params.JWT_SECRET}"
         resources:
           requests:
             memory: "2Gi"
