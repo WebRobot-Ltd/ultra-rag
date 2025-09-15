@@ -46,13 +46,13 @@ spec:
         - containerPort: 8100
           name: retriever-proxy
         - containerPort: 8101
-          name: generation-proxy
+          name: gen-proxy
         - containerPort: 8102
           name: corpus-proxy
         - containerPort: 8103
           name: reranker-proxy
         - containerPort: 8104
-          name: evaluation-proxy
+          name: eval-proxy
         - containerPort: 8105
           name: benchmark-proxy
         - containerPort: 8106
@@ -119,7 +119,7 @@ spec:
     port: 8100
     targetPort: 8100
     protocol: TCP
-  - name: generation-proxy
+  - name: gen-proxy
     port: 8101
     targetPort: 8101
     protocol: TCP
@@ -131,7 +131,7 @@ spec:
     port: 8103
     targetPort: 8103
     protocol: TCP
-  - name: evaluation-proxy
+  - name: eval-proxy
     port: 8104
     targetPort: 8104
     protocol: TCP
