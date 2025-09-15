@@ -237,7 +237,13 @@ spec:
   type: ClusterIP
 EOF
                             
-                            # Deploy Deployment
+                            # Deploy new single pod deployment with auth proxy
+                            kubectl apply -f k8s/deployment-single-pod.yaml
+                            
+                            # Deploy production ingress with auth proxy ports
+                            kubectl apply -f k8s-mcp-ingress-prod.yaml
+                            
+                            # Legacy deployment (keeping for reference)
                             cat <<EOF | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
