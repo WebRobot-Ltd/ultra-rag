@@ -111,6 +111,11 @@ RUN mkdir -p /var/log/supervisor
 # Create supervisor socket directory (specific subdirectory)
 RUN mkdir -p /var/run/supervisor
 
+# Create supervisord runtime dir under /ultrarag for non-root pid/socket
+RUN mkdir -p /ultrarag/run/supervisor && \
+    chown -R ultrarag:ultrarag /ultrarag/run/supervisor && \
+    chmod 755 /ultrarag/run/supervisor
+
 # Change ownership of directories before switching user
 RUN chown -R ultrarag:ultrarag /ultrarag && \
     chown -R ultrarag:ultrarag /var/log/supervisor && \
@@ -137,8 +142,9 @@ ENV MCP_PORT=8000
 
 # Create startup script
 RUN echo '#!/bin/bash' > /ultrarag/start.sh && \
-    echo 'mkdir -p /var/run/supervisor' >> /ultrarag/start.sh && \
-    echo 'chmod 755 /var/run/supervisor' >> /ultrarag/start.sh && \
+    echo 'mkdir -p /ultrarag/run/supervisor' >> /ultrarag/start.sh && \
+    echo 'chmod 755 /ultrarag/run/supervisor' >> /ultrarag/start.sh && \
+    echo 'export SUPERVISOR_PIDFILE=/ultrarag/run/supervisor/supervisord.pid' >> /ultrarag/start.sh && \
     echo 'exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf' >> /ultrarag/start.sh && \
     chmod +x /ultrarag/start.sh
 
