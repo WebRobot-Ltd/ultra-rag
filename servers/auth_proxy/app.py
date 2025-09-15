@@ -39,6 +39,7 @@ async def _auth_ok(headers: Dict[str, str]) -> bool:
         
         db_config = get_database_config()
         db_client = DatabaseClient(db_config)
+        await db_client.initialize()
     except Exception as e:
         print(f"Failed to initialize database client: {e}")
         return False
