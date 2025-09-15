@@ -50,7 +50,7 @@ config = AuthConfig()
 
 def get_database_config():
     """Get database configuration for DatabaseClient"""
-    from database_client import DatabaseConfig
+    from .database_client import DatabaseConfig
     
     return DatabaseConfig(
         host=config.database_host,
