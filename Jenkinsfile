@@ -49,12 +49,12 @@ pipeline {
             defaultValue: false,
             description: 'Abilita autenticazione Python integrata sui server MCP'
         )
-        stringParam(
+        string(
             name: 'DATABASE_URL',
             defaultValue: 'postgresql://user:password@localhost:5432/strapi',
             description: 'URL del database per autenticazione'
         )
-        stringParam(
+        string(
             name: 'JWT_SECRET',
             defaultValue: 'your-secret-key',
             description: 'Chiave segreta per validazione JWT'
