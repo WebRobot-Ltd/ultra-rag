@@ -300,11 +300,13 @@ spec:
             secretKeyRef:
               name: search-apis-secret
               key: exa-api-key
+              optional: true
         - name: TAVILY_API_KEY
           valueFrom:
             secretKeyRef:
               name: search-apis-secret
               key: tavily-api-key
+              optional: true
         - name: ENABLE_AUTH
           value: "${ENABLE_AUTH}"
         - name: DATABASE_URL
