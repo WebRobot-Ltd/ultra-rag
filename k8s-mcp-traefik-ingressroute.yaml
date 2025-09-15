@@ -1,0 +1,31 @@
+# IngressRoute to rewrite /retriever/mcp to /mcp and route to retriever (8002)
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: ultrarag-mcp-rewrite-retriever
+  namespace: default
+spec:
+  replacePathRegex:
+    regex: "^/retriever/mcp(.*)"
+    replacement: "/mcp$1"
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ultrarag-mcp-dev-retriever-mcp
+  namespace: default
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`ultrarag-mcp-dev.webrobot.eu`) && PathPrefix(`/retriever/mcp`)
+      kind: Rule
+      middlewares:
+        - name: ultrarag-mcp-rewrite-retriever
+        - name: ultrarag-mcp-cors
+      services:
+        - name: ultrarag-mcp-service
+          namespace: default
+          port: 8002
+          scheme: http
+  tls: {}

@@ -411,11 +411,53 @@ class UltraRAG_MCP_Server(FastMCP):
         show_banner: bool = False,
         **transport_kwargs: Any,
     ) -> None:
+        # Add authentication middleware if enabled
+        if self.enable_auth and transport == "http":
+            # Create authentication middleware
+            auth_middleware = self._create_auth_middleware()
+            if auth_middleware:
+                # Add to existing middleware list
+                if self.middleware is None:
+                    self.middleware = []
+                self.middleware.append(auth_middleware)
+        
         super().run(
             transport=transport,
             show_banner=show_banner,
             **transport_kwargs,
         )
+    
+    def _create_auth_middleware(self):
+        """Create authentication middleware for HTTP requests"""
+        if not self.enable_auth or not AUTH_AVAILABLE:
+            return None
+            
+        class AuthMiddleware:
+            def __init__(self, server):
+                self.server = server
+            
+            async def __call__(self, context: MiddlewareContext):
+                # Extract headers from the request
+                headers = {}
+                if hasattr(context, 'request') and hasattr(context.request, 'headers'):
+                    headers = dict(context.request.headers)
+                elif hasattr(context, 'headers'):
+                    headers = dict(context.headers)
+                
+                # Authenticate the request
+                if not self.server.authenticate_request(headers):
+                    # Return 401 Unauthorized response
+                    from fastmcp.server.middleware import MiddlewareResponse
+                    return MiddlewareResponse(
+                        status_code=401,
+                        headers={"Content-Type": "application/json"},
+                        body='{"error": "Unauthorized", "message": "Authentication required. Please provide a valid API key or JWT token."}'
+                    )
+                
+                # Continue to next middleware or handler
+                return await context.next()
+        
+        return AuthMiddleware(self)
 
 
 logging.getLogger("mcp").setLevel(logging.WARNING)

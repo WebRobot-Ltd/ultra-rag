@@ -1,0 +1,105 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ultrarag-mcp-basic-auth
+  namespace: default
+type: Opaque
+stringData:
+  users: |
+    admin:$apr1$q/2.0/mcp$1
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: ultrarag-mcp-cors
+  namespace: default
+spec:
+  headers:
+    accessControlAllowMethods:
+      - GET
+      - POST
+      - OPTIONS
+    accessControlAllowHeaders:
+      - Content-Type
+      - Accept
+      - Authorization
+    accessControlAllowOriginList:
+      - "*"
+    accessControlMaxAge: 100
+    addVaryHeader: true
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: ultrarag-mcp-rewrite-retriever
+  namespace: default
+spec:
+  replacePathRegex:
+    regex: "^/retriever/mcp(.*)"
+    replacement: "/mcp$1"
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: ultrarag-mcp-auth
+  namespace: default
+spec:
+  basicAuth:
+    secret: ultrarag-mcp-basic-auth
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: ultrarag-mcp-retriever-chain
+  namespace: default
+spec:
+  chain:
+    middlewares:
+      - name: ultrarag-mcp-rewrite-retriever
+      - name: ultrarag-mcp-cors
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ultrarag-mcp-retriever-secure
+  namespace: default
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`retriever-mcp.webrobot.eu`) && PathPrefix(`/retriever/mcp`)
+      kind: Rule
+      middlewares:
+        - name: ultrarag-mcp-retriever-chain
+        - name: ultrarag-mcp-auth
+      services:
+        - name: ultrarag-mcp-service
+          port: 8002
+          scheme: http
+  tls: {}
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ultrarag-mcp-retriever-dev
+  namespace: default
+spec:
+  entryPoints:
+    - websecure
+    - web
+  routes:
+    - match: Host(`retriever-mcp-dev.webrobot.eu`) && PathPrefix(`/retriever/mcp`)
+      kind: Rule
+      middlewares:
+        - name: ultrarag-mcp-retriever-chain
+      services:
+        - name: ultrarag-mcp-service
+          port: 8002
+          scheme: http
+  tls: {}

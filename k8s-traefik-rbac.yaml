@@ -1,0 +1,29 @@
+# RBAC permissions for Jenkins to manage Traefik resources
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: jenkins-traefik-manager
+rules:
+- apiGroups: ["traefik.containo.us"]
+  resources: ["middlewares", "ingressroutes", "tlsoptions", "serversets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["networking.k8s.io"]
+  resources: ["ingresses"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: [""]
+  resources: ["secrets", "services", "configmaps"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: jenkins-traefik-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: jenkins-traefik-manager.
+subjects:
+- kind: ServiceAccount
+  name: jenkins
+  namespace: cicd

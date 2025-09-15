@@ -1137,6 +1137,6 @@ if __name__ == "__main__":
     Retriever(app)
     
     if args.transport == 'http':
-        app.run(transport="http", host=args.host, port=args.port, stateless_http=True)
+        app.run(transport="http", host=args.host, port=args.port, stateless_http=True, json_response=True)
     else:
         app.run(transport="stdio")

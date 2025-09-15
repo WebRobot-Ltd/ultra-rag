@@ -1,0 +1,179 @@
+{
+  "roles": {
+    "admin": {
+      "level": 4,
+      "departments": ["*"],
+      "security_levels": [1, 2, 3, 4],
+      "permissions": ["read", "write", "delete", "admin"],
+      "description": "Full administrative access to all documents and systems"
+    },
+    "manager": {
+      "level": 3,
+      "departments": ["engineering", "sales", "marketing", "data"],
+      "security_levels": [1, 2, 3],
+      "permissions": ["read", "write"],
+      "description": "Manager level access to department documents"
+    },
+    "senior_engineer": {
+      "level": 3,
+      "departments": ["engineering"],
+      "security_levels": [1, 2, 3],
+      "permissions": ["read", "write"],
+      "description": "Senior engineer with access to technical documents"
+    },
+    "engineer": {
+      "level": 2,
+      "departments": ["engineering"],
+      "security_levels": [1, 2],
+      "permissions": ["read", "write"],
+      "description": "Engineer with access to technical documents"
+    },
+    "analyst": {
+      "level": 2,
+      "departments": ["data", "engineering"],
+      "security_levels": [1, 2],
+      "permissions": ["read"],
+      "description": "Data analyst with read access to relevant documents"
+    },
+    "sales_rep": {
+      "level": 2,
+      "departments": ["sales"],
+      "security_levels": [1, 2],
+      "permissions": ["read"],
+      "description": "Sales representative with access to sales documents"
+    },
+    "viewer": {
+      "level": 1,
+      "departments": ["general"],
+      "security_levels": [1],
+      "permissions": ["read"],
+      "description": "Basic viewer with access to public documents only"
+    },
+    "guest": {
+      "level": 1,
+      "departments": ["general"],
+      "security_levels": [1],
+      "permissions": ["read"],
+      "description": "Guest user with limited access to public documents"
+    }
+  },
+  "departments": {
+    "engineering": {
+      "parent": null,
+      "permissions": ["read", "write"],
+      "description": "Engineering department",
+      "security_requirements": "Technical documents may contain sensitive information"
+    },
+    "sales": {
+      "parent": null,
+      "permissions": ["read"],
+      "description": "Sales department",
+      "security_requirements": "Customer data and sales strategies"
+    },
+    "marketing": {
+      "parent": null,
+      "permissions": ["read"],
+      "description": "Marketing department",
+      "security_requirements": "Marketing strategies and campaign data"
+    },
+    "data": {
+      "parent": null,
+      "permissions": ["read", "write"],
+      "description": "Data analytics department",
+      "security_requirements": "Data analysis and reporting"
+    },
+    "hr": {
+      "parent": null,
+      "permissions": ["read", "write"],
+      "description": "Human resources department",
+      "security_requirements": "Employee data and HR policies"
+    },
+    "finance": {
+      "parent": null,
+      "permissions": ["read", "write"],
+      "description": "Finance department",
+      "security_requirements": "Financial data and accounting information"
+    },
+    "general": {
+      "parent": null,
+      "permissions": ["read"],
+      "description": "General access",
+      "security_requirements": "Public information only"
+    }
+  },
+  "security_levels": {
+    "1": {
+      "name": "public",
+      "description": "Public information accessible to all users",
+      "requirements": "No special access requirements"
+    },
+    "2": {
+      "name": "internal",
+      "description": "Internal company information",
+      "requirements": "Employee or authorized access required"
+    },
+    "3": {
+      "name": "confidential",
+      "description": "Confidential business information",
+      "requirements": "Manager level or specific role access required"
+    },
+    "4": {
+      "name": "secret",
+      "description": "Highly sensitive information",
+      "requirements": "Admin level or explicit authorization required"
+    }
+  },
+  "permissions": {
+    "read": {
+      "description": "View and read document content",
+      "scope": "Document level"
+    },
+    "write": {
+      "description": "Create and modify documents",
+      "scope": "Document level"
+    },
+    "delete": {
+      "description": "Delete documents",
+      "scope": "Document level"
+    },
+    "admin": {
+      "description": "Full administrative access",
+      "scope": "System level"
+    }
+  },
+  "default_assignments": {
+    "user_patterns": {
+      "admin_*": ["admin"],
+      "mgr_*": ["manager"],
+      "eng_*": ["engineer"],
+      "senior_eng_*": ["senior_engineer"],
+      "analyst_*": ["analyst"],
+      "sales_*": ["sales_rep"],
+      "guest_*": ["guest"],
+      "default": ["viewer"]
+    },
+    "department_patterns": {
+      "admin_*": ["*"],
+      "mgr_*": ["engineering", "sales", "marketing"],
+      "eng_*": ["engineering"],
+      "senior_eng_*": ["engineering"],
+      "analyst_*": ["data", "engineering"],
+      "sales_*": ["sales"],
+      "guest_*": ["general"],
+      "default": ["general"]
+    }
+  },
+  "audit_settings": {
+    "log_access_attempts": true,
+    "log_document_access": true,
+    "log_permission_denials": true,
+    "retention_days": 365,
+    "alert_on_suspicious_activity": true
+  },
+  "compliance": {
+    "gdpr_enabled": true,
+    "data_retention_policy": "7_years",
+    "right_to_be_forgotten": true,
+    "audit_trail_required": true
+  }
+}
