@@ -16,6 +16,8 @@ spec:
       labels:
         app: ultrarag-mcp
     spec:
+      imagePullSecrets:
+      - name: docker-config-secret
       containers:
       - name: ultrarag
         image: ghcr.io/webrobot-ltd/ultra-rag:latest
