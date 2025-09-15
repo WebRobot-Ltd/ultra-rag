@@ -5,8 +5,8 @@ metadata:
   name: ultrarag-mcp-retriever-secure
   namespace: default
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web
-    traefik.ingress.kubernetes.io/router.middlewares: default-ultrarag-mcp-cors@kubernetescrd,default-ultrarag-mcp-auth@kubernetescrd
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.middlewares: default-ultrarag-mcp-cors@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
@@ -28,8 +28,8 @@ metadata:
   name: ultrarag-mcp-generation-secure
   namespace: default
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web
-    traefik.ingress.kubernetes.io/router.middlewares: default-ultrarag-mcp-cors@kubernetescrd,default-ultrarag-mcp-auth@kubernetescrd
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.middlewares: default-ultrarag-mcp-cors@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
@@ -51,8 +51,8 @@ metadata:
   name: ultrarag-mcp-corpus-secure
   namespace: default
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web
-    traefik.ingress.kubernetes.io/router.middlewares: default-ultrarag-mcp-cors@kubernetescrd,default-ultrarag-mcp-auth@kubernetescrd
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.middlewares: default-ultrarag-mcp-cors@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
@@ -74,8 +74,8 @@ metadata:
   name: ultrarag-mcp-reranker-secure
   namespace: default
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web
-    traefik.ingress.kubernetes.io/router.middlewares: default-ultrarag-mcp-cors@kubernetescrd,default-ultrarag-mcp-auth@kubernetescrd
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.middlewares: default-ultrarag-mcp-cors@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
@@ -97,8 +97,8 @@ metadata:
   name: ultrarag-mcp-evaluation-secure
   namespace: default
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web
-    traefik.ingress.kubernetes.io/router.middlewares: default-ultrarag-mcp-cors@kubernetescrd,default-ultrarag-mcp-auth@kubernetescrd
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.middlewares: default-ultrarag-mcp-cors@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
@@ -120,8 +120,8 @@ metadata:
   name: ultrarag-mcp-benchmark-secure
   namespace: default
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web
-    traefik.ingress.kubernetes.io/router.middlewares: default-ultrarag-mcp-cors@kubernetescrd,default-ultrarag-mcp-auth@kubernetescrd
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.middlewares: default-ultrarag-mcp-cors@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
@@ -143,8 +143,8 @@ metadata:
   name: ultrarag-mcp-custom-secure
   namespace: default
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web
-    traefik.ingress.kubernetes.io/router.middlewares: default-ultrarag-mcp-cors@kubernetescrd,default-ultrarag-mcp-auth@kubernetescrd
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.middlewares: default-ultrarag-mcp-cors@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
@@ -166,8 +166,8 @@ metadata:
   name: ultrarag-mcp-prompt-secure
   namespace: default
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web
-    traefik.ingress.kubernetes.io/router.middlewares: default-ultrarag-mcp-cors@kubernetescrd,default-ultrarag-mcp-auth@kubernetescrd
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.middlewares: default-ultrarag-mcp-cors@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
@@ -189,8 +189,8 @@ metadata:
   name: ultrarag-mcp-router-secure
   namespace: default
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web
-    traefik.ingress.kubernetes.io/router.middlewares: default-ultrarag-mcp-cors@kubernetescrd,default-ultrarag-mcp-auth@kubernetescrd
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.middlewares: default-ultrarag-mcp-cors@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
