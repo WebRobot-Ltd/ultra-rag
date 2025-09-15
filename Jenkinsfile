@@ -204,6 +204,9 @@ metadata:
 data:
   MILVUS_HOST: "${MILVUS_HOST}"
   MILVUS_PORT: "${MILVUS_PORT}"
+  ENABLE_AUTH: "${ENABLE_AUTH}"
+  DATABASE_URL: "${DATABASE_URL}"
+  JWT_SECRET: "${JWT_SECRET}"
 EOF
                             
                             # Deploy Secret (placeholder)
@@ -306,11 +309,20 @@ spec:
               name: search-apis-secret
               key: tavily-api-key
         - name: ENABLE_AUTH
-          value: "${ENABLE_AUTH}"
+          valueFrom:
+            configMapKeyRef:
+              name: ultrarag-config
+              key: ENABLE_AUTH
         - name: DATABASE_URL
-          value: "${DATABASE_URL}"
+          valueFrom:
+            configMapKeyRef:
+              name: ultrarag-config
+              key: DATABASE_URL
         - name: JWT_SECRET
-          value: "${JWT_SECRET}"
+          valueFrom:
+            configMapKeyRef:
+              name: ultrarag-config
+              key: JWT_SECRET
         resources:
           requests:
             memory: "2Gi"
