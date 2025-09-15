@@ -93,10 +93,6 @@ class UltraRAG_MCP_Server(FastMCP):
                 # Initialize authentication components
                 self.auth_manager = AuthManager()
                 self.api_key_validator = APIKeyValidator()
-                
-                # Configure authentication if config provided
-                if auth_config:
-                    self.auth_manager.configure(auth_config)
                     
                 self.logger.info(f"Authentication enabled for {name}")
             except Exception as e:
