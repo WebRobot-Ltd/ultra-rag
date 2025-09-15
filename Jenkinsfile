@@ -189,6 +189,7 @@ spec:
                     script {
                         echo "☸️ Deploy UltraRAG su Kubernetes..."
                         
+                        withEnv(["ENABLE_AUTH=${params.ENABLE_AUTH}", "DATABASE_URL=${params.DATABASE_URL}", "JWT_SECRET=${params.JWT_SECRET}"]) {
                         sh '''
                             # Crea namespace se non esiste
                             kubectl create namespace ${K8S_NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -
@@ -305,11 +306,11 @@ spec:
               name: search-apis-secret
               key: tavily-api-key
         - name: ENABLE_AUTH
-          value: "${params.ENABLE_AUTH}"
+          value: "${ENABLE_AUTH}"
         - name: DATABASE_URL
-          value: "${params.DATABASE_URL}"
+          value: "${DATABASE_URL}"
         - name: JWT_SECRET
-          value: "${params.JWT_SECRET}"
+          value: "${JWT_SECRET}"
         resources:
           requests:
             memory: "2Gi"
@@ -697,6 +698,7 @@ EOF
                             
                             echo "✅ Deploy Kubernetes completato con Ingress Traefik"
                         '''
+                        }
                     }
                 }
             }
